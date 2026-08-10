@@ -1,48 +1,48 @@
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Appbar, Button, Snackbar, Text } from 'react-native-paper';
+import { useRouter } from 'expo-router';
+import { Button } from 'react-native-paper';
+import { AppScreen } from '../components/AppScreen';
+
+const MENU_ITEMS = [
+  { label: 'Места', href: '/places' as const },
+  { label: 'Поездки', href: '/trips' as const },
+  { label: 'Следующее место', href: '/next' as const },
+  { label: 'Настройки', href: '/settings' as const },
+];
 
 export default function HomeScreen() {
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Content title="GoNext" />
-      </Appbar.Header>
-
+    <AppScreen title="GoNext" showBack={false}>
       <View style={styles.content}>
-        <Text variant="headlineSmall" style={styles.title}>
-          Привет, Алексей!
-        </Text>
-        <Button mode="contained" onPress={() => setSnackbarVisible(true)}>
-          Нажми меня
-        </Button>
+        {MENU_ITEMS.map((item) => (
+          <Button
+            key={item.href}
+            mode="contained"
+            style={styles.button}
+            contentStyle={styles.buttonContent}
+            onPress={() => router.push(item.href)}
+          >
+            {item.label}
+          </Button>
+        ))}
       </View>
-
-      <Snackbar
-        visible={snackbarVisible}
-        onDismiss={() => setSnackbarVisible(false)}
-        duration={3000}
-      >
-        Кнопка нажата
-      </Snackbar>
-    </View>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 24,
     gap: 16,
   },
-  title: {
-    textAlign: 'center',
+  button: {
+    borderRadius: 8,
+  },
+  buttonContent: {
+    height: 52,
   },
 });

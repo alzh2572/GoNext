@@ -41,3 +41,32 @@ Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -like '172.20
 ```powershell
 npx expo start --tunnel
 ```
+
+## Порт 8081
+
+Проверить, свободен ли порт:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue |
+  Format-Table LocalAddress, LocalPort, State, OwningProcess -AutoSize
+```
+
+Если вывода нет — порт свободен. Если есть строки — порт занят; `OwningProcess` — PID процесса.
+
+Узнать процесс:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  ForEach-Object { Get-Process -Id $_ | Select-Object Id, ProcessName, Path }
+```
+
+Освободить порт:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8081 -ErrorAction SilentlyContinue |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  ForEach-Object { Stop-Process -Id $_ -Force }
+```
+
+Либо в терминале с Metro нажмите `Ctrl+C`.
