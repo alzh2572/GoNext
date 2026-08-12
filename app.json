@@ -29,7 +29,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложению нужен доступ к фото для дневника путешествий.",
+          "cameraPermission": "Приложению нужна камера, чтобы снимать места в поездке."
+        }
+      ]
     ]
   }
 }
