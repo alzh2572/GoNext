@@ -16,10 +16,10 @@ import {
   Text,
 } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
+import { MapActions } from '../../../components/MapActions';
 import { placesRepository, type Place } from '../../../src/db';
 import { deletePhotoFiles } from '../../../src/photos/storage';
 import { formatDd } from '../../../src/maps/dd';
-import { openPlaceOnMap } from '../../../src/maps/openMap';
 
 export default function PlaceDetailsScreen() {
   const router = useRouter();
@@ -91,18 +91,6 @@ export default function PlaceDetailsScreen() {
     ]);
   };
 
-  const openMap = async () => {
-    if (!place?.dd) {
-      setError('У места нет координат');
-      return;
-    }
-    try {
-      await openPlaceOnMap(place.dd, place.name);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось открыть карту');
-    }
-  };
-
   return (
     <AppScreen
       title={place?.name ?? 'Место'}
@@ -169,14 +157,7 @@ export default function PlaceDetailsScreen() {
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <Button
-              mode="contained"
-              disabled={!place.dd || busy}
-              onPress={() => void openMap()}
-              style={styles.button}
-            >
-              Открыть на карте
-            </Button>
+            <MapActions dd={place.dd} label={place.name} disabled={busy} />
             <Button
               mode="outlined"
               disabled={busy}
@@ -240,8 +221,5 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#b00020',
-  },
-  button: {
-    marginTop: 8,
   },
 });

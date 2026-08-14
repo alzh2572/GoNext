@@ -33,7 +33,7 @@ import {
   deletePhotoFiles,
   savePhotoFile,
 } from '../../../../src/photos/storage';
-import { openPlaceOnMap } from '../../../../src/maps/openMap';
+import { MapActions } from '../../../../components/MapActions';
 
 export default function TripStopScreen() {
   const router = useRouter();
@@ -198,18 +198,6 @@ export default function TripStopScreen() {
     );
   };
 
-  const openMap = async () => {
-    if (!stop?.place.dd) {
-      setError('У места нет координат');
-      return;
-    }
-    try {
-      await openPlaceOnMap(stop.place.dd, stop.place.name);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось открыть карту');
-    }
-  };
-
   const onVisitedChange = (value: boolean) => {
     setVisited(value);
     if (value && !visitDate.trim()) {
@@ -301,13 +289,7 @@ export default function TripStopScreen() {
             >
               Сохранить
             </Button>
-            <Button
-              mode="outlined"
-              disabled={!stop.place.dd || busy}
-              onPress={() => void openMap()}
-            >
-              Открыть на карте
-            </Button>
+            <MapActions dd={stop.place.dd} label={stop.place.name} disabled={busy} />
             <Button
               mode="text"
               textColor="#b00020"

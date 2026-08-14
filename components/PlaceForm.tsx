@@ -17,6 +17,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import type { Place, PlaceInput } from '../src/db/types';
 import { formatDd, parseDd } from '../src/maps/dd';
+import { getCurrentDecimalDegrees } from '../src/maps/location';
 import {
   canStorePhotosLocally,
   deletePhotoFile,
@@ -111,6 +112,23 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
     ]);
   };
 
+  const fillCurrentLocation = async () => {
+    try {
+      setBusy(true);
+      setError(null);
+      const dd = await getCurrentDecimalDegrees();
+      setDdText(formatDd(dd));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Не удалось получить текущие координаты',
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (nameInvalid) {
       setError('Укажите название места');
@@ -189,6 +207,13 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
         <HelperText type="info">
           Формат DD: широта и долгота через запятую, например 55.7558, 37.6173
         </HelperText>
+        <Button
+          mode="outlined"
+          disabled={busy}
+          onPress={() => void fillCurrentLocation()}
+        >
+          Подставить мои координаты
+        </Button>
 
         <Text variant="titleSmall" style={styles.section}>
           Фотографии

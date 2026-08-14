@@ -8,6 +8,7 @@ import {
   Text,
 } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
+import { MapActions } from '../components/MapActions';
 import {
   tripPlacesRepository,
   tripsRepository,
@@ -15,7 +16,6 @@ import {
   type TripPlaceWithPlace,
 } from '../src/db';
 import { formatDd } from '../src/maps/dd';
-import { openPlaceInNavigator, openPlaceOnMap } from '../src/maps/openMap';
 import { todayIsoDate } from '../src/dates/iso';
 
 type ScreenState =
@@ -85,34 +85,6 @@ export default function NextPlaceScreen() {
       );
     } finally {
       setBusy(false);
-    }
-  };
-
-  const openMap = async (stop: TripPlaceWithPlace) => {
-    if (!stop.place.dd) {
-      setActionError('У места нет координат');
-      return;
-    }
-    try {
-      setActionError(null);
-      await openPlaceOnMap(stop.place.dd, stop.place.name);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Не удалось открыть карту');
-    }
-  };
-
-  const openNavigator = async (stop: TripPlaceWithPlace) => {
-    if (!stop.place.dd) {
-      setActionError('У места нет координат');
-      return;
-    }
-    try {
-      setActionError(null);
-      await openPlaceInNavigator(stop.place.dd, stop.place.name);
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : 'Не удалось открыть навигатор',
-      );
     }
   };
 
@@ -192,20 +164,11 @@ export default function NextPlaceScreen() {
 
             {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
 
-            <Button
-              mode="contained"
-              disabled={!state.stop.place.dd}
-              onPress={() => void openNavigator(state.stop)}
-            >
-              Открыть в навигаторе
-            </Button>
-            <Button
-              mode="outlined"
-              disabled={!state.stop.place.dd}
-              onPress={() => void openMap(state.stop)}
-            >
-              Открыть на карте
-            </Button>
+            <MapActions
+              dd={state.stop.place.dd}
+              label={state.stop.place.name}
+              disabled={busy}
+            />
             <Button
               mode="outlined"
               loading={busy}
