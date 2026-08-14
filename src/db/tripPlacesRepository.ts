@@ -84,6 +84,94 @@ export async function getTripPlaceById(id: number): Promise<TripPlace | null> {
   return row ? mapTripPlace(row) : null;
 }
 
+export async function getTripPlaceWithPlace(
+  id: number,
+): Promise<TripPlaceWithPlace | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<
+    TripPlaceRow & {
+      place_id: number;
+      name: string;
+      description: string;
+      visitlater: number;
+      liked: number;
+      latitude: number | null;
+      longitude: number | null;
+      place_photos: string;
+      place_createdAt: string;
+    }
+  >(
+    `SELECT
+       tp.*,
+       p.id as place_id,
+       p.name,
+       p.description,
+       p.visitlater,
+       p.liked,
+       p.latitude,
+       p.longitude,
+       p.photos as place_photos,
+       p.createdAt as place_createdAt
+     FROM trip_places tp
+     INNER JOIN places p ON p.id = tp.placeId
+     WHERE tp.id = ?`,
+    id,
+  );
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    ...mapTripPlace(row),
+    place: mapPlace({
+      id: row.place_id,
+      name: row.name,
+      description: row.description,
+      visitlater: row.visitlater,
+      liked: row.liked,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      photos: row.place_photos,
+      createdAt: row.place_createdAt,
+    }),
+  };
+}
+
+export async function getNextOrder(tripId: number): Promise<number> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ nextOrder: number | null }>(
+    'SELECT MAX(orderIndex) + 1 as nextOrder FROM trip_places WHERE tripId = ?',
+    tripId,
+  );
+  return row?.nextOrder ?? 0;
+}
+
+export async function getTripPlaceStats(): Promise<
+  Record<number, { total: number; visited: number }>
+> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{
+    tripId: number;
+    total: number;
+    visited: number;
+  }>(
+    `SELECT
+       tripId,
+       COUNT(*) as total,
+       SUM(CASE WHEN visited = 1 THEN 1 ELSE 0 END) as visited
+     FROM trip_places
+     GROUP BY tripId`,
+  );
+
+  return Object.fromEntries(
+    rows.map((row) => [
+      row.tripId,
+      { total: row.total, visited: row.visited },
+    ]),
+  );
+}
+
 export async function addTripPlace(input: TripPlaceInput): Promise<TripPlace> {
   const db = await getDatabase();
   const result = await db.runAsync(

@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Button,
+  HelperText,
+  Switch,
+  Text,
+  TextInput,
+} from 'react-native-paper';
+import type { Trip, TripInput } from '../src/db/types';
+import { parseIsoDate } from '../src/dates/iso';
+
+type TripFormProps = {
+  initial?: Trip | null;
+  submitLabel: string;
+  onSubmit: (input: TripInput) => Promise<void>;
+};
+
+export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const [startDate, setStartDate] = useState(initial?.startDate ?? '');
+  const [endDate, setEndDate] = useState(initial?.endDate ?? '');
+  const [current, setCurrent] = useState(initial?.current ?? false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const titleInvalid = title.trim().length === 0;
+
+  const handleSubmit = async () => {
+    if (titleInvalid) {
+      setError('Укажите название поездки');
+      return;
+    }
+
+    const parsedStart = parseIsoDate(startDate);
+    const parsedEnd = parseIsoDate(endDate);
+
+    if (parsedStart === 'invalid' || parsedEnd === 'invalid') {
+      setError('Даты в формате ГГГГ-ММ-ДД, например 2026-08-14');
+      return;
+    }
+
+    if (parsedStart && parsedEnd && parsedStart > parsedEnd) {
+      setError('Дата начала не может быть позже даты окончания');
+      return;
+    }
+
+    try {
+      setBusy(true);
+      setError(null);
+      await onSubmit({
+        title,
+        description,
+        startDate: parsedStart,
+        endDate: parsedEnd,
+        current,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось сохранить');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.scroll}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.panel}>
+        <TextInput
+          label="Название *"
+          value={title}
+          onChangeText={setTitle}
+          mode="outlined"
+          style={styles.input}
+        />
+        <TextInput
+          label="Описание"
+          value={description}
+          onChangeText={setDescription}
+          mode="outlined"
+          multiline
+          numberOfLines={4}
+          style={styles.input}
+        />
+        <TextInput
+          label="Дата начала"
+          placeholder="2026-08-14"
+          value={startDate}
+          onChangeText={setStartDate}
+          mode="outlined"
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.input}
+        />
+        <TextInput
+          label="Дата окончания"
+          placeholder="2026-08-20"
+          value={endDate}
+          onChangeText={setEndDate}
+          mode="outlined"
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.input}
+        />
+        <HelperText type="info">Формат дат: ГГГГ-ММ-ДД</HelperText>
+
+        <View style={styles.row}>
+          <View style={styles.rowText}>
+            <Text>Текущая поездка</Text>
+            <Text variant="bodySmall" style={styles.hint}>
+              Только одна поездка может быть текущей
+            </Text>
+          </View>
+          <Switch value={current} onValueChange={setCurrent} />
+        </View>
+
+        {error ? <HelperText type="error">{error}</HelperText> : null}
+
+        <Button
+          mode="contained"
+          loading={busy}
+          disabled={busy || titleInvalid}
+          onPress={() => void handleSubmit()}
+        >
+          {submitLabel}
+        </Button>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  panel: {
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+  },
+  input: {
+    backgroundColor: '#fff',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    gap: 12,
+  },
+  rowText: {
+    flex: 1,
+    gap: 2,
+  },
+  hint: {
+    opacity: 0.7,
+  },
+});
