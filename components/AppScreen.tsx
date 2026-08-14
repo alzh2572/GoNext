@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.88)',
+    elevation: 0,
   },
   content: {
     flex: 1,

@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Text } from 'react-native-paper';
 import { initDatabase } from '../db';
 import { ensurePhotosDirectory } from '../photos/storage';
+import { ScreenPanel } from '../../components/ScreenPanel';
 
 type DatabaseProviderProps = {
   children: ReactNode;
@@ -11,12 +12,15 @@ type DatabaseProviderProps = {
 export function DatabaseProvider({ children }: DatabaseProviderProps) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
+        setError(null);
+        setReady(false);
         await initDatabase();
         try {
           await ensurePhotosDirectory();
@@ -28,6 +32,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
         }
       } catch (err) {
         if (!cancelled) {
+          setReady(false);
           setError(
             err instanceof Error
               ? err.message
@@ -40,13 +45,18 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey]);
 
   if (error) {
     return (
       <View style={styles.center}>
-        <Text variant="titleMedium">Ошибка хранилища</Text>
-        <Text style={styles.errorText}>{error}</Text>
+        <ScreenPanel>
+          <Text variant="titleMedium">Ошибка хранилища</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button mode="contained" onPress={() => setRetryKey((value) => value + 1)}>
+            Повторить
+          </Button>
+        </ScreenPanel>
       </View>
     );
   }
@@ -75,7 +85,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   errorText: {
-    textAlign: 'center',
     opacity: 0.8,
   },
 });

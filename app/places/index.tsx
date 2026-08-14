@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActivityIndicator, FAB, Text } from 'react-native-paper';
+import { FAB, Text } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
+import { EmptyState, LoadingState } from '../../components/ScreenPanel';
 import { placesRepository, type Place } from '../../src/db';
 import { formatDd } from '../../src/maps/dd';
+import { cardSurface } from '../../src/theme';
 
 export default function PlacesListScreen() {
   const router = useRouter();
@@ -35,20 +37,24 @@ export default function PlacesListScreen() {
     <AppScreen title="Места">
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator animating size="large" />
-          </View>
+          <LoadingState />
         ) : error ? (
-          <View style={styles.panel}>
-            <Text variant="bodyLarge">{error}</Text>
-          </View>
+          <EmptyState
+            title="Не удалось загрузить места"
+            message={error}
+            actionLabel="Повторить"
+            onAction={() => {
+              setLoading(true);
+              void loadPlaces();
+            }}
+          />
         ) : places.length === 0 ? (
-          <View style={styles.panel}>
-            <Text variant="titleMedium">Пока нет мест</Text>
-            <Text variant="bodyMedium" style={styles.hint}>
-              Добавьте первое место, которое хотите посетить.
-            </Text>
-          </View>
+          <EmptyState
+            title="Пока нет мест"
+            message="Добавьте первое место, которое хотите посетить."
+            actionLabel="Добавить место"
+            onAction={() => router.push('/places/new')}
+          />
         ) : (
           <FlatList
             data={places}
@@ -95,27 +101,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   list: {
     padding: 16,
     paddingBottom: 96,
     gap: 12,
   },
-  panel: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    gap: 8,
-  },
   item: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    ...cardSurface,
     gap: 4,
   },
   hint: {

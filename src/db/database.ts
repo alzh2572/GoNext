@@ -65,3 +65,14 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 export async function initDatabase(): Promise<void> {
   await getDatabase();
 }
+
+export async function resetAllData(): Promise<void> {
+  const db = await getDatabase();
+  await db.execAsync(`
+    PRAGMA foreign_keys = OFF;
+    DELETE FROM trip_places;
+    DELETE FROM trips;
+    DELETE FROM places;
+    PRAGMA foreign_keys = ON;
+  `);
+}

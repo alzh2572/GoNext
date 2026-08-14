@@ -91,3 +91,16 @@ export function getPhotosDirectoryUri(): string {
 export function canStorePhotosLocally(): boolean {
   return isFileSystemAvailable();
 }
+
+export async function clearPhotosDirectory(): Promise<void> {
+  if (!isFileSystemAvailable()) {
+    return;
+  }
+
+  const root = getPhotosRootUri();
+  const info = await FileSystem.getInfoAsync(root);
+  if (info.exists) {
+    await FileSystem.deleteAsync(root, { idempotent: true });
+  }
+  await ensurePhotosDirectory();
+}

@@ -1,15 +1,14 @@
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet } from 'react-native';
+import Constants from 'expo-constants';
 import { useFocusEffect } from 'expo-router';
-import { Button, Text } from 'react-native-paper';
+import { Button, Divider, Text } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
-import {
-  placesRepository,
-  tripsRepository,
-  type Place,
-  type Trip,
-} from '../src/db';
-import { getPhotosDirectoryUri, canStorePhotosLocally } from '../src/photos/storage';
+import { ScreenPanel } from '../components/ScreenPanel';
+import { placesRepository, resetAllData, tripsRepository } from '../src/db';
+import { clearPhotosDirectory } from '../src/photos/storage';
+
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 export default function SettingsScreen() {
   const [placesCount, setPlacesCount] = useState(0);
@@ -18,12 +17,18 @@ export default function SettingsScreen() {
   const [busy, setBusy] = useState(false);
 
   const refreshCounts = useCallback(async () => {
-    const [places, trips] = await Promise.all([
-      placesRepository.countPlaces(),
-      tripsRepository.countTrips(),
-    ]);
-    setPlacesCount(places);
-    setTripsCount(trips);
+    try {
+      const [places, trips] = await Promise.all([
+        placesRepository.countPlaces(),
+        tripsRepository.countTrips(),
+      ]);
+      setPlacesCount(places);
+      setTripsCount(trips);
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : 'Не удалось прочитать хранилище',
+      );
+    }
   }, []);
 
   useFocusEffect(
@@ -32,99 +37,98 @@ export default function SettingsScreen() {
     }, [refreshCounts]),
   );
 
-  const runStorageSmokeTest = async () => {
-    setBusy(true);
-    setStatus(null);
+  const runReset = async () => {
     try {
-      const place: Place = await placesRepository.createPlace({
-        name: 'Тестовое место',
-        description: 'Проверка CRUD этапа 1',
-        visitlater: true,
-        liked: false,
-        dd: { latitude: 55.7558, longitude: 37.6173 },
-      });
-
-      const trip: Trip = await tripsRepository.createTrip({
-        title: 'Тестовая поездка',
-        description: 'Проверка CRUD этапа 1',
-        startDate: '2026-08-10',
-        endDate: '2026-08-15',
-        current: true,
-      });
-
-      await placesRepository.updatePlace(place.id, {
-        name: 'Тестовое место (обновлено)',
-        description: place.description,
-        visitlater: place.visitlater,
-        liked: true,
-        dd: place.dd,
-        photos: place.photos,
-      });
-
-      await tripsRepository.deleteTrip(trip.id);
-      await placesRepository.deletePlace(place.id);
-
+      setBusy(true);
+      setStatus(null);
+      await resetAllData();
+      await clearPhotosDirectory();
       await refreshCounts();
-      setStatus(`CRUD OK. Каталог фото: ${getPhotosDirectoryUri()}`);
+      setStatus('Локальные данные удалены.');
     } catch (error) {
       setStatus(
-        error instanceof Error ? error.message : 'Ошибка проверки хранилища',
+        error instanceof Error ? error.message : 'Не удалось сбросить данные',
       );
     } finally {
       setBusy(false);
     }
   };
 
+  const confirmReset = () => {
+    if (Platform.OS === 'web') {
+      void runReset();
+      return;
+    }
+
+    Alert.alert(
+      'Сбросить все данные?',
+      'Будут удалены места, поездки, заметки и фото на этом устройстве. Отменить нельзя.',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Сбросить', style: 'destructive', onPress: () => void runReset() },
+      ],
+    );
+  };
+
   return (
     <AppScreen title="Настройки">
-      <View style={styles.content}>
-        <Text variant="titleMedium">Локальное хранилище</Text>
-        <Text>Мест в БД: {placesCount}</Text>
-        <Text>Поездок в БД: {tripsCount}</Text>
-        <Text variant="bodySmall" style={styles.path}>
-          Фото:{' '}
-          {canStorePhotosLocally()
-            ? getPhotosDirectoryUri()
-            : 'недоступно в браузере (только на телефоне)'}
-        </Text>
-
-        <Button
-          mode="contained"
-          loading={busy}
-          disabled={busy}
-          onPress={() => void runStorageSmokeTest()}
-        >
-          Проверить CRUD (Place / Trip)
-        </Button>
-
-        {status ? (
-          <Text variant="bodyMedium" style={styles.status}>
-            {status}
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <ScreenPanel>
+          <Text variant="titleMedium">О приложении</Text>
+          <Text variant="bodyMedium">
+            GoNext — дневник туриста. Места, поездки и заметки хранятся только на
+            этом устройстве. Интернет нужен лишь для карт и навигатора.
           </Text>
-        ) : null}
+          <Text variant="bodySmall" style={styles.muted}>
+            Версия {APP_VERSION} · Expo SDK 54 · работает офлайн
+          </Text>
+        </ScreenPanel>
 
-        <Text variant="bodySmall" style={styles.note}>
-          Версия 1.0.0 · данные только на устройстве
-        </Text>
-      </View>
+        <ScreenPanel>
+          <Text variant="titleMedium">Как пользоваться</Text>
+          <Text variant="bodyMedium">
+            1. Сохраняйте интересные места.{'\n'}
+            2. Соберите из них поездку и отметьте её текущей.{'\n'}
+            3. На экране «Следующее место» открывайте навигатор и отмечайте
+            посещения.
+          </Text>
+        </ScreenPanel>
+
+        <ScreenPanel>
+          <Text variant="titleMedium">Локальное хранилище</Text>
+          <Text>Мест: {placesCount}</Text>
+          <Text>Поездок: {tripsCount}</Text>
+          <Divider />
+          <Button
+            mode="outlined"
+            textColor="#B00020"
+            loading={busy}
+            disabled={busy}
+            onPress={confirmReset}
+          >
+            Сбросить все данные
+          </Button>
+          {status ? (
+            <Text variant="bodyMedium" style={styles.status}>
+              {status}
+            </Text>
+          ) : null}
+        </ScreenPanel>
+      </ScrollView>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
+  scroll: {
     padding: 16,
+    paddingBottom: 32,
     gap: 12,
   },
-  path: {
+  muted: {
     opacity: 0.7,
   },
   status: {
     marginTop: 4,
-  },
-  note: {
-    marginTop: 'auto',
-    opacity: 0.6,
   },
 });

@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import {
-  ActivityIndicator,
-  Button,
-  Chip,
-  Text,
-} from 'react-native-paper';
+import { Button, Chip, Text } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
 import { MapActions } from '../components/MapActions';
+import {
+  EmptyState,
+  LoadingState,
+  ScreenPanel,
+} from '../components/ScreenPanel';
 import {
   tripPlacesRepository,
   tripsRepository,
@@ -91,57 +91,38 @@ export default function NextPlaceScreen() {
   return (
     <AppScreen title="Следующее место">
       {state.kind === 'loading' ? (
-        <View style={styles.center}>
-          <ActivityIndicator animating size="large" />
-        </View>
+        <LoadingState />
       ) : state.kind === 'error' ? (
-        <View style={styles.wrap}>
-          <View style={styles.panel}>
-            <Text>{state.message}</Text>
-            <Button onPress={() => void loadNext()}>Повторить</Button>
-          </View>
-        </View>
+        <EmptyState
+          title="Не удалось загрузить"
+          message={state.message}
+          actionLabel="Повторить"
+          onAction={() => void loadNext()}
+        />
       ) : state.kind === 'no-current' ? (
-        <View style={styles.wrap}>
-          <View style={styles.panel}>
-            <Text variant="titleMedium">Нет текущей поездки</Text>
-            <Text style={styles.muted}>
-              Отметьте поездку как текущую, чтобы видеть следующее место маршрута.
-            </Text>
-            <Button mode="contained" onPress={() => router.push('/trips')}>
-              К поездкам
-            </Button>
-          </View>
-        </View>
+        <EmptyState
+          title="Нет текущей поездки"
+          message="Отметьте поездку как текущую, чтобы видеть следующее место маршрута."
+          actionLabel="К поездкам"
+          onAction={() => router.push('/trips')}
+        />
       ) : state.kind === 'empty-route' ? (
-        <View style={styles.wrap}>
-          <View style={styles.panel}>
-            <Text variant="titleMedium">{state.trip.title}</Text>
-            <Text style={styles.muted}>В текущей поездке пока нет мест.</Text>
-            <Button
-              mode="contained"
-              onPress={() => router.push(`/trips/${state.trip.id}/add`)}
-            >
-              Добавить место
-            </Button>
-          </View>
-        </View>
+        <EmptyState
+          title={state.trip.title}
+          message="В текущей поездке пока нет мест."
+          actionLabel="Добавить место"
+          onAction={() => router.push(`/trips/${state.trip.id}/add`)}
+        />
       ) : state.kind === 'all-visited' ? (
-        <View style={styles.wrap}>
-          <View style={styles.panel}>
-            <Text variant="titleMedium">{state.trip.title}</Text>
-            <Text>Все места маршрута посещены.</Text>
-            <Button
-              mode="contained"
-              onPress={() => router.push(`/trips/${state.trip.id}`)}
-            >
-              Открыть дневник
-            </Button>
-          </View>
-        </View>
+        <EmptyState
+          title={state.trip.title}
+          message="Все места маршрута посещены."
+          actionLabel="Открыть дневник"
+          onAction={() => router.push(`/trips/${state.trip.id}`)}
+        />
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.panel}>
+          <ScreenPanel>
             <Chip compact>текущая поездка</Chip>
             <Text variant="titleSmall" style={styles.muted}>
               {state.trip.title}
@@ -184,7 +165,7 @@ export default function NextPlaceScreen() {
             >
               Подробнее
             </Button>
-          </View>
+          </ScreenPanel>
         </ScrollView>
       )}
     </AppScreen>
@@ -192,23 +173,9 @@ export default function NextPlaceScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   scroll: {
     padding: 16,
     paddingBottom: 32,
-  },
-  wrap: {
-    padding: 16,
-  },
-  panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 12,
-    padding: 16,
-    gap: 10,
   },
   section: {
     marginTop: 4,

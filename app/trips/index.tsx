@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ActivityIndicator, Chip, FAB, Text } from 'react-native-paper';
+import { Chip, FAB, Text } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
+import { EmptyState, LoadingState } from '../../components/ScreenPanel';
 import {
   tripPlacesRepository,
   tripsRepository,
   type Trip,
 } from '../../src/db';
 import { formatTripPeriod } from '../../src/dates/iso';
+import { cardSurface } from '../../src/theme';
 
 function tripRole(total: number, visited: number): string {
   if (total === 0) {
@@ -61,20 +63,24 @@ export default function TripsListScreen() {
     <AppScreen title="Поездки">
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator animating size="large" />
-          </View>
+          <LoadingState />
         ) : error ? (
-          <View style={styles.panel}>
-            <Text variant="bodyLarge">{error}</Text>
-          </View>
+          <EmptyState
+            title="Не удалось загрузить поездки"
+            message={error}
+            actionLabel="Повторить"
+            onAction={() => {
+              setLoading(true);
+              void loadTrips();
+            }}
+          />
         ) : trips.length === 0 ? (
-          <View style={styles.panel}>
-            <Text variant="titleMedium">Пока нет поездок</Text>
-            <Text variant="bodyMedium" style={styles.hint}>
-              Создайте поездку и соберите маршрут из мест.
-            </Text>
-          </View>
+          <EmptyState
+            title="Пока нет поездок"
+            message="Создайте поездку и соберите маршрут из мест."
+            actionLabel="Добавить поездку"
+            onAction={() => router.push('/trips/new')}
+          />
         ) : (
           <FlatList
             data={trips}
@@ -125,27 +131,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   list: {
     padding: 16,
     paddingBottom: 96,
     gap: 12,
   },
-  panel: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    gap: 8,
-  },
   item: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    ...cardSurface,
     gap: 4,
   },
   titleRow: {
