@@ -9,11 +9,12 @@ import { useAppTheme } from '../src/context/ThemePreference';
 import { placesRepository, resetAllData, tripsRepository } from '../src/db';
 import { clearPhotosDirectory } from '../src/photos/storage';
 import type { ThemeMode } from '../src/theme';
+import { AccentColorPicker } from '../components/AccentColorPicker';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 export default function SettingsScreen() {
-  const { mode, setMode } = useAppTheme();
+  const { mode, setMode, accentId, setAccentId } = useAppTheme();
   const [placesCount, setPlacesCount] = useState(0);
   const [tripsCount, setTripsCount] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
@@ -89,6 +90,8 @@ export default function SettingsScreen() {
           <Text variant="bodySmall" style={styles.muted}>
             В тёмной теме фоновая картинка скрывается.
           </Text>
+          <Text variant="titleSmall">Основной цвет</Text>
+          <AccentColorPicker value={accentId} onChange={setAccentId} />
         </ScreenPanel>
 
         <ScreenPanel>

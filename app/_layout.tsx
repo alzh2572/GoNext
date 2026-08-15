@@ -10,10 +10,10 @@ import {
 import { getPaperTheme } from '../src/theme';
 
 function ThemedApp() {
-  const { mode, isDark } = useAppTheme();
+  const { mode, isDark, accentId } = useAppTheme();
 
   return (
-    <PaperProvider theme={getPaperTheme(mode)}>
+    <PaperProvider theme={getPaperTheme(mode, accentId)}>
       <DatabaseProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }} />
