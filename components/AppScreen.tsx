@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Appbar, useTheme } from 'react-native-paper';
 import { useAppTheme } from '../src/context/ThemePreference';
 
@@ -20,23 +21,28 @@ export function AppScreen({
   actions,
 }: AppScreenProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { isDark } = useAppTheme();
   const theme = useTheme();
+  const headerForeground = isDark ? '#FFFFFF' : '#1C1B1F';
 
   const body = (
     <>
       <Appbar.Header
+        dark={isDark}
         style={[
           styles.header,
           {
-            backgroundColor: isDark
-              ? theme.colors.surface
-              : 'rgba(255,255,255,0.88)',
+            backgroundColor: isDark ? theme.colors.surface : '#FFFFFFF5',
           },
         ]}
       >
         {showBack ? (
-          <Appbar.BackAction
+          <Appbar.Action
+            icon="arrow-left"
+            isLeading
+            color={headerForeground}
+            accessibilityLabel={t('common.back')}
             onPress={() => {
               if (router.canGoBack()) {
                 router.back();
@@ -46,7 +52,11 @@ export function AppScreen({
             }}
           />
         ) : null}
-        <Appbar.Content title={title} />
+        <Appbar.Content
+          title={title}
+          color={headerForeground}
+          titleStyle={{ color: headerForeground }}
+        />
         {actions}
       </Appbar.Header>
       <View style={styles.content}>{children}</View>
