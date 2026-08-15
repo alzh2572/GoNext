@@ -5,14 +5,17 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import { TripForm } from '../../../components/TripForm';
 import { tripsRepository, type Trip, type TripInput } from '../../../src/db';
+import { messageFromError } from '../../../src/i18n/errors';
 
 export default function EditTripScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -31,15 +34,13 @@ export default function EditTripScreen() {
           const data = await tripsRepository.getTripById(tripId);
           if (!cancelled) {
             if (!data) {
-              setError('Поездка не найдена');
+              setError(t('trips.notFound'));
             }
             setTrip(data);
           }
         } catch (err) {
           if (!cancelled) {
-            setError(
-              err instanceof Error ? err.message : 'Не удалось загрузить поездку',
-            );
+            setError(messageFromError(err, 'trips.loadFailed'));
           }
         } finally {
           if (!cancelled) {
@@ -51,7 +52,7 @@ export default function EditTripScreen() {
       return () => {
         cancelled = true;
       };
-    }, [tripId]),
+    }, [tripId, t]),
   );
 
   const handleSubmit = async (input: TripInput) => {
@@ -60,20 +61,20 @@ export default function EditTripScreen() {
   };
 
   return (
-    <AppScreen title="Редактирование">
+    <AppScreen title={t('trips.edit')}>
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator animating size="large" />
         </View>
       ) : error || !trip ? (
         <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
-          <Text>{error ?? 'Поездка не найдена'}</Text>
+          <Text>{error ?? t('trips.notFound')}</Text>
         </View>
       ) : (
         <TripForm
           key={trip.id}
           initial={trip}
-          submitLabel="Сохранить"
+          submitLabel={t('trips.submitSave')}
           onSubmit={handleSubmit}
         />
       )}

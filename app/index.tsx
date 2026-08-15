@@ -1,22 +1,24 @@
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Button } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
 
-const MENU_ITEMS = [
-  { label: 'Места', href: '/places' as const },
-  { label: 'Поездки', href: '/trips' as const },
-  { label: 'Следующее место', href: '/next' as const },
-  { label: 'Настройки', href: '/settings' as const },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
+
+  const menuItems = [
+    { label: t('home.places'), href: '/places' as const },
+    { label: t('home.trips'), href: '/trips' as const },
+    { label: t('home.next'), href: '/next' as const },
+    { label: t('home.settings'), href: '/settings' as const },
+  ];
 
   return (
     <AppScreen title="GoNext" showBack={false}>
       <View style={styles.content}>
-        {MENU_ITEMS.map((item) => (
+        {menuItems.map((item) => (
           <Button
             key={item.href}
             mode="contained"

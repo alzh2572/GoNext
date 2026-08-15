@@ -2,11 +2,14 @@ import { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 import { useFocusEffect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Button, Divider, SegmentedButtons, Text } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
 import { ScreenPanel } from '../components/ScreenPanel';
 import { useAppTheme } from '../src/context/ThemePreference';
 import { placesRepository, resetAllData, tripsRepository } from '../src/db';
+import { changeAppLanguage, isAppLanguage, type AppLanguage } from '../src/i18n';
+import { messageFromError } from '../src/i18n/errors';
 import { clearPhotosDirectory } from '../src/photos/storage';
 import type { ThemeMode } from '../src/theme';
 import { AccentColorPicker } from '../components/AccentColorPicker';
@@ -14,11 +17,14 @@ import { AccentColorPicker } from '../components/AccentColorPicker';
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const { mode, setMode, accentId, setAccentId } = useAppTheme();
   const [placesCount, setPlacesCount] = useState(0);
   const [tripsCount, setTripsCount] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const language = isAppLanguage(i18n.language) ? i18n.language : 'ru';
 
   const refreshCounts = useCallback(async () => {
     try {
@@ -29,9 +35,7 @@ export default function SettingsScreen() {
       setPlacesCount(places);
       setTripsCount(trips);
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : 'Не удалось прочитать хранилище',
-      );
+      setStatus(messageFromError(error, 'settings.readFailed'));
     }
   }, []);
 
@@ -48,11 +52,9 @@ export default function SettingsScreen() {
       await resetAllData();
       await clearPhotosDirectory();
       await refreshCounts();
-      setStatus('Локальные данные удалены.');
+      setStatus(t('settings.resetDone'));
     } catch (error) {
-      setStatus(
-        error instanceof Error ? error.message : 'Не удалось сбросить данные',
-      );
+      setStatus(messageFromError(error, 'settings.resetFailed'));
     } finally {
       setBusy(false);
     }
@@ -64,61 +66,65 @@ export default function SettingsScreen() {
       return;
     }
 
-    Alert.alert(
-      'Сбросить все данные?',
-      'Будут удалены места, поездки, заметки и фото на этом устройстве. Отменить нельзя.',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Сбросить', style: 'destructive', onPress: () => void runReset() },
-      ],
-    );
+    Alert.alert(t('settings.resetConfirmTitle'), t('settings.resetConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.resetAction'),
+        style: 'destructive',
+        onPress: () => void runReset(),
+      },
+    ]);
   };
 
   return (
-    <AppScreen title="Настройки">
+    <AppScreen title={t('settings.title')}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <ScreenPanel>
-          <Text variant="titleMedium">Оформление</Text>
+          <Text variant="titleMedium">{t('settings.appearance')}</Text>
           <SegmentedButtons
             value={mode}
             onValueChange={(value) => setMode(value as ThemeMode)}
             buttons={[
-              { value: 'light', label: 'Светлая' },
-              { value: 'dark', label: 'Тёмная' },
+              { value: 'light', label: t('settings.light') },
+              { value: 'dark', label: t('settings.dark') },
             ]}
           />
           <Text variant="bodySmall" style={styles.muted}>
-            В тёмной теме фоновая картинка скрывается.
+            {t('settings.darkHint')}
           </Text>
-          <Text variant="titleSmall">Основной цвет</Text>
+          <Text variant="titleSmall">{t('settings.primaryColor')}</Text>
           <AccentColorPicker value={accentId} onChange={setAccentId} />
         </ScreenPanel>
 
         <ScreenPanel>
-          <Text variant="titleMedium">О приложении</Text>
-          <Text variant="bodyMedium">
-            GoNext — дневник туриста. Места, поездки и заметки хранятся только на
-            этом устройстве. Интернет нужен лишь для карт и навигатора.
-          </Text>
+          <Text variant="titleMedium">{t('settings.language')}</Text>
+          <SegmentedButtons
+            value={language}
+            onValueChange={(value) => void changeAppLanguage(value as AppLanguage)}
+            buttons={[
+              { value: 'ru', label: t('settings.russian') },
+              { value: 'en', label: t('settings.english') },
+            ]}
+          />
+        </ScreenPanel>
+
+        <ScreenPanel>
+          <Text variant="titleMedium">{t('settings.about')}</Text>
+          <Text variant="bodyMedium">{t('settings.aboutText')}</Text>
           <Text variant="bodySmall" style={styles.muted}>
-            Версия {APP_VERSION} · Expo SDK 54 · работает офлайн
+            {t('settings.version', { version: APP_VERSION })}
           </Text>
         </ScreenPanel>
 
         <ScreenPanel>
-          <Text variant="titleMedium">Как пользоваться</Text>
-          <Text variant="bodyMedium">
-            1. Сохраняйте интересные места.{'\n'}
-            2. Соберите из них поездку и отметьте её текущей.{'\n'}
-            3. На экране «Следующее место» открывайте навигатор и отмечайте
-            посещения.
-          </Text>
+          <Text variant="titleMedium">{t('settings.howto')}</Text>
+          <Text variant="bodyMedium">{t('settings.howtoText')}</Text>
         </ScreenPanel>
 
         <ScreenPanel>
-          <Text variant="titleMedium">Локальное хранилище</Text>
-          <Text>Мест: {placesCount}</Text>
-          <Text>Поездок: {tripsCount}</Text>
+          <Text variant="titleMedium">{t('settings.storage')}</Text>
+          <Text>{t('settings.placesCount', { count: placesCount })}</Text>
+          <Text>{t('settings.tripsCount', { count: tripsCount })}</Text>
           <Divider />
           <Button
             mode="outlined"
@@ -127,7 +133,7 @@ export default function SettingsScreen() {
             disabled={busy}
             onPress={confirmReset}
           >
-            Сбросить все данные
+            {t('settings.reset')}
           </Button>
           {status ? (
             <Text variant="bodyMedium" style={styles.status}>

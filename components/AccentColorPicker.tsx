@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from 'react-native-paper';
 import { ACCENT_COLORS, type AccentId } from '../src/theme';
 
@@ -9,6 +10,7 @@ type AccentColorPickerProps = {
 
 export function AccentColorPicker({ value, onChange }: AccentColorPickerProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={styles.row}>
@@ -20,7 +22,7 @@ export function AccentColorPicker({ value, onChange }: AccentColorPickerProps) {
           <Pressable
             key={accent.id}
             accessibilityRole="button"
-            accessibilityLabel={`Основной цвет ${accent.id}`}
+            accessibilityLabel={`${t('settings.primaryColor')}: ${t(`accents.${accent.id}`)}`}
             accessibilityState={{ selected }}
             onPress={() => onChange(accent.id)}
             style={[

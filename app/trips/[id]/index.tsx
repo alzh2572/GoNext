@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   ActivityIndicator,
   Appbar,
@@ -25,25 +27,27 @@ import {
   type TripPlaceWithPlace,
 } from '../../../src/db';
 import { formatIsoDate, formatTripPeriod } from '../../../src/dates/iso';
+import { messageFromError } from '../../../src/i18n/errors';
 import { deletePhotoFiles } from '../../../src/photos/storage';
 
-function tripRoleLabel(stops: TripPlaceWithPlace[]): string {
+function tripRoleLabel(stops: TripPlaceWithPlace[], t: TFunction): string {
   if (stops.length === 0) {
-    return 'Пустой маршрут';
+    return t('trips.roleEmptyTrip');
   }
   const visited = stops.filter((item) => item.visited).length;
   if (visited === 0) {
-    return 'План поездки';
+    return t('trips.rolePlanTrip');
   }
   if (visited === stops.length) {
-    return 'Дневник поездки';
+    return t('trips.roleDiaryTrip');
   }
-  return 'План и дневник';
+  return t('trips.roleBothTrip');
 }
 
 export default function TripDetailsScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -57,7 +61,7 @@ export default function TripDetailsScreen() {
 
   const loadTrip = useCallback(async () => {
     if (!Number.isFinite(tripId)) {
-      setError('Некорректный идентификатор поездки');
+      setError(t('trips.invalidId'));
       setLoading(false);
       return;
     }
@@ -69,7 +73,7 @@ export default function TripDetailsScreen() {
         tripPlacesRepository.getTripPlacesWithPlace(tripId),
       ]);
       if (!data) {
-        setError('Поездка не найдена');
+        setError(t('trips.notFound'));
         setTrip(null);
         setStops([]);
       } else {
@@ -77,11 +81,11 @@ export default function TripDetailsScreen() {
         setStops(route);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки');
+      setError(messageFromError(err, 'trips.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [tripId]);
+  }, [tripId, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,7 +108,7 @@ export default function TripDetailsScreen() {
       await tripPlacesRepository.reorderTripPlaces(tripId, orderedIds);
       await loadTrip();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось изменить порядок');
+      setError(messageFromError(err, 'trips.reorderFailed'));
     } finally {
       setBusy(false);
     }
@@ -123,7 +127,7 @@ export default function TripDetailsScreen() {
         await deletePhotoFiles(photos);
         router.replace('/trips');
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Не удалось удалить');
+        setError(messageFromError(err, 'trips.deleteFailed'));
       } finally {
         setBusy(false);
       }
@@ -134,15 +138,15 @@ export default function TripDetailsScreen() {
       return;
     }
 
-    Alert.alert('Удалить поездку?', 'Маршрут и заметки посещений будут удалены.', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Удалить', style: 'destructive', onPress: () => void runDelete() },
+    Alert.alert(t('trips.deleteConfirmTitle'), t('trips.deleteConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => void runDelete() },
     ]);
   };
 
   return (
     <AppScreen
-      title={trip?.title ?? 'Поездка'}
+      title={trip?.title ?? t('trips.trip')}
       actions={
         trip ? (
           <Appbar.Action
@@ -159,14 +163,14 @@ export default function TripDetailsScreen() {
       ) : error && !trip ? (
         <View style={[styles.panel, surface]}>
           <Text>{error}</Text>
-          <Button onPress={() => router.replace('/trips')}>К списку</Button>
+          <Button onPress={() => router.replace('/trips')}>{t('common.backToList')}</Button>
         </View>
       ) : trip ? (
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={[styles.panel, surface]}>
             <View style={styles.chips}>
-              <Chip compact>{tripRoleLabel(stops)}</Chip>
-              {trip.current ? <Chip compact>текущая</Chip> : null}
+              <Chip compact>{tripRoleLabel(stops, t)}</Chip>
+              {trip.current ? <Chip compact>{t('trips.current')}</Chip> : null}
             </View>
             {trip.description ? (
               <Text variant="bodyLarge">{trip.description}</Text>
@@ -181,23 +185,21 @@ export default function TripDetailsScreen() {
               disabled={busy}
               onPress={() => router.push(`/trips/${trip.id}/add`)}
             >
-              Добавить место
+              {t('trips.addPlace')}
             </Button>
             <Button
               mode="outlined"
               disabled={busy}
               onPress={() => router.push(`/trips/${trip.id}/edit`)}
             >
-              Редактировать поездку
+              {t('trips.editTrip')}
             </Button>
           </View>
 
           {stops.length === 0 ? (
             <View style={[styles.panel, surface]}>
-              <Text variant="titleMedium">Маршрут пуст</Text>
-              <Text style={styles.muted}>
-                Добавьте места из базы или создайте новое место сразу в поездке.
-              </Text>
+              <Text variant="titleMedium">{t('trips.emptyRouteTitle')}</Text>
+              <Text style={styles.muted}>{t('trips.emptyRouteMessage')}</Text>
             </View>
           ) : (
             stops.map((stop, index) => (
@@ -213,7 +215,7 @@ export default function TripDetailsScreen() {
                     {index + 1}. {stop.place.name}
                   </Text>
                   <Chip compact>
-                    {stop.visited ? 'посещено' : 'план'}
+                    {stop.visited ? t('trips.visited') : t('trips.plan')}
                   </Chip>
                 </View>
                 {stop.visited && stop.visitDate ? (
@@ -229,9 +231,9 @@ export default function TripDetailsScreen() {
                 <Text variant="bodySmall" style={styles.muted}>
                   {[
                     stop.photos.length > 0
-                      ? `фото посещения: ${stop.photos.length}`
+                      ? t('trips.visitPhotos', { count: stop.photos.length })
                       : null,
-                    stop.place.dd ? 'есть координаты' : null,
+                    stop.place.dd ? t('trips.hasCoordinates') : null,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
@@ -259,7 +261,7 @@ export default function TripDetailsScreen() {
             disabled={busy}
             onPress={confirmDelete}
           >
-            Удалить поездку
+            {t('trips.deleteTrip')}
           </Button>
         </ScrollView>
       ) : null}

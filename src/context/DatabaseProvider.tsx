@@ -1,7 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { initDatabase } from '../db';
+import { messageFromError } from '../i18n/errors';
 import { ensurePhotosDirectory } from '../photos/storage';
 import { ScreenPanel } from '../../components/ScreenPanel';
 
@@ -11,6 +13,7 @@ type DatabaseProviderProps = {
 
 export function DatabaseProvider({ children }: DatabaseProviderProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -34,11 +37,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
       } catch (err) {
         if (!cancelled) {
           setReady(false);
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Не удалось инициализировать локальную базу',
-          );
+          setError(messageFromError(err, 'storage.initFailed'));
         }
       }
     })();
@@ -52,10 +51,10 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     return (
       <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <ScreenPanel>
-          <Text variant="titleMedium">Ошибка хранилища</Text>
+          <Text variant="titleMedium">{t('storage.errorTitle')}</Text>
           <Text style={styles.errorText}>{error}</Text>
           <Button mode="contained" onPress={() => setRetryKey((value) => value + 1)}>
-            Повторить
+            {t('common.retry')}
           </Button>
         </ScreenPanel>
       </View>
@@ -66,7 +65,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     return (
       <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator animating size="large" />
-        <Text style={styles.loadingText}>Подготовка локальных данных…</Text>
+        <Text style={styles.loadingText}>{t('storage.loading')}</Text>
       </View>
     );
   }

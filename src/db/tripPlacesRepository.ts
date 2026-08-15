@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { getDatabase } from './database';
 import { mapPlace, mapTripPlace, stringifyPhotos } from './mappers';
 import type { TripPlace, TripPlaceInput, TripPlaceWithPlace } from './types';
@@ -189,7 +190,7 @@ export async function addTripPlace(input: TripPlaceInput): Promise<TripPlace> {
 
   const tripPlace = await getTripPlaceById(Number(result.lastInsertRowId));
   if (!tripPlace) {
-    throw new Error('Не удалось добавить место в поездку');
+    throw new Error(i18n.t('trips.addToTripFailed'));
   }
   return tripPlace;
 }
@@ -200,7 +201,7 @@ export async function updateTripPlace(
 ): Promise<TripPlace> {
   const existing = await getTripPlaceById(id);
   if (!existing) {
-    throw new Error('Место поездки не найдено');
+    throw new Error(i18n.t('stop.notFound'));
   }
 
   const db = await getDatabase();
@@ -222,7 +223,7 @@ export async function updateTripPlace(
 
   const tripPlace = await getTripPlaceById(id);
   if (!tripPlace) {
-    throw new Error('Место поездки не найдено');
+    throw new Error(i18n.t('stop.notFound'));
   }
   return tripPlace;
 }
@@ -248,7 +249,7 @@ export async function deleteTripPlace(id: number): Promise<void> {
   const db = await getDatabase();
   const result = await db.runAsync('DELETE FROM trip_places WHERE id = ?', id);
   if (result.changes === 0) {
-    throw new Error('Место поездки не найдено');
+    throw new Error(i18n.t('stop.notFound'));
   }
 }
 

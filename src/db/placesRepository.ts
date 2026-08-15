@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { getDatabase } from './database';
 import { mapPlace, stringifyPhotos } from './mappers';
 import type { Place, PlaceInput } from './types';
@@ -53,7 +54,7 @@ export async function createPlace(input: PlaceInput): Promise<Place> {
 
   const place = await getPlaceById(Number(result.lastInsertRowId));
   if (!place) {
-    throw new Error('Не удалось создать место');
+    throw new Error(i18n.t('places.createFailed'));
   }
   return place;
 }
@@ -85,7 +86,7 @@ export async function updatePlace(
 
   const place = await getPlaceById(id);
   if (!place) {
-    throw new Error('Место не найдено');
+    throw new Error(i18n.t('places.notFound'));
   }
   return place;
 }
@@ -95,14 +96,12 @@ export async function deletePlace(id: number): Promise<void> {
   try {
     const result = await db.runAsync('DELETE FROM places WHERE id = ?', id);
     if (result.changes === 0) {
-      throw new Error('Место не найдено');
+      throw new Error(i18n.t('places.notFound'));
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.toLowerCase().includes('foreign key')) {
-      throw new Error(
-        'Нельзя удалить место: оно используется в одной из поездок',
-      );
+      throw new Error(i18n.t('places.inUse'));
     }
     throw error;
   }

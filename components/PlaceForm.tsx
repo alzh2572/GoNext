@@ -7,6 +7,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   HelperText,
@@ -17,6 +18,7 @@ import {
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import type { Place, PlaceInput } from '../src/db/types';
+import { messageFromError } from '../src/i18n/errors';
 import { formatDd, parseDd } from '../src/maps/dd';
 import { getCurrentDecimalDegrees } from '../src/maps/location';
 import {
@@ -33,6 +35,7 @@ type PlaceFormProps = {
 
 export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [visitlater, setVisitlater] = useState(initial?.visitlater ?? true);
@@ -48,7 +51,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
 
   const pickImage = async (fromCamera: boolean) => {
     if (!canStorePhotosLocally()) {
-      setError('Фото доступны только на мобильном устройстве');
+      setError(t('photos.mobileOnly'));
       return;
     }
 
@@ -57,11 +60,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      setError(
-        fromCamera
-          ? 'Нет доступа к камере'
-          : 'Нет доступа к галерее',
-      );
+      setError(fromCamera ? t('photos.noCamera') : t('photos.noGallery'));
       return;
     }
 
@@ -87,7 +86,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
       const savedUri = await savePhotoFile(result.assets[0].uri, folder);
       setPhotos((prev) => [...prev, savedUri]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить фото');
+      setError(messageFromError(err, 'photos.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -108,9 +107,9 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
       return;
     }
 
-    Alert.alert('Удалить фото?', 'Фото будет удалено с устройства.', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Удалить', style: 'destructive', onPress: () => void doRemove() },
+    Alert.alert(t('photos.deleteTitle'), t('photos.deleteMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => void doRemove() },
     ]);
   };
 
@@ -121,11 +120,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
       const dd = await getCurrentDecimalDegrees();
       setDdText(formatDd(dd));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Не удалось получить текущие координаты',
-      );
+      setError(messageFromError(err, 'places.locationFailed'));
     } finally {
       setBusy(false);
     }
@@ -133,13 +128,13 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
 
   const handleSubmit = async () => {
     if (nameInvalid) {
-      setError('Укажите название места');
+      setError(t('places.nameRequired'));
       return;
     }
 
     const dd = parseDd(ddText);
     if (dd === 'invalid') {
-      setError('Введите координаты в формате DD: 55.7558, 37.6173');
+      setError(t('places.ddInvalid'));
       return;
     }
 
@@ -157,7 +152,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
       setError(null);
       await onSubmit(input);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить');
+      setError(messageFromError(err, 'errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -169,14 +164,14 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
         style={[styles.panel, { backgroundColor: theme.colors.surface }]}
       >
         <TextInput
-          label="Название *"
+          label={t('places.nameLabel')}
           value={name}
           onChangeText={setName}
           mode="outlined"
           style={styles.input}
         />
         <TextInput
-          label="Описание"
+          label={t('places.descriptionLabel')}
           value={description}
           onChangeText={setDescription}
           mode="outlined"
@@ -186,20 +181,20 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
         />
 
         <View style={styles.row}>
-          <Text>Посетить позже</Text>
+          <Text>{t('places.visitLater')}</Text>
           <Switch value={visitlater} onValueChange={setVisitlater} />
         </View>
         <View style={styles.row}>
-          <Text>Понравилось</Text>
+          <Text>{t('places.liked')}</Text>
           <Switch value={liked} onValueChange={setLiked} />
         </View>
 
         <Text variant="titleSmall" style={styles.section}>
-          Координаты (Decimal Degrees, DD)
+          {t('places.coordinatesDd')}
         </Text>
         <TextInput
-          label="Широта, долгота"
-          placeholder="55.7558, 37.6173"
+          label={t('places.ddLabel')}
+          placeholder={t('places.ddPlaceholder')}
           value={ddText}
           onChangeText={setDdText}
           mode="outlined"
@@ -208,19 +203,17 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
           autoCorrect={false}
           style={styles.input}
         />
-        <HelperText type="info">
-          Формат DD: широта и долгота через запятую, например 55.7558, 37.6173
-        </HelperText>
+        <HelperText type="info">{t('places.ddHint')}</HelperText>
         <Button
           mode="outlined"
           disabled={busy}
           onPress={() => void fillCurrentLocation()}
         >
-          Подставить мои координаты
+          {t('places.useMyLocation')}
         </Button>
 
         <Text variant="titleSmall" style={styles.section}>
-          Фотографии
+          {t('photos.section')}
         </Text>
         <View style={styles.photoActions}>
           <Button
@@ -228,14 +221,14 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
             disabled={busy}
             onPress={() => void pickImage(false)}
           >
-            Галерея
+            {t('photos.gallery')}
           </Button>
           <Button
             mode="outlined"
             disabled={busy}
             onPress={() => void pickImage(true)}
           >
-            Камера
+            {t('photos.camera')}
           </Button>
         </View>
 
@@ -244,7 +237,7 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
             <View key={uri} style={styles.photoWrap}>
               <Image source={{ uri }} style={styles.photo} />
               <Button compact onPress={() => removePhoto(uri)}>
-                Удалить
+                {t('common.delete')}
               </Button>
             </View>
           ))}

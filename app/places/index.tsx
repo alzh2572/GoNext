@@ -1,16 +1,19 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { FAB, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
 import { EmptyState, LoadingState } from '../../components/ScreenPanel';
 import { placesRepository, type Place } from '../../src/db';
+import { messageFromError } from '../../src/i18n/errors';
 import { formatDd } from '../../src/maps/dd';
 import { cardShape } from '../../src/theme';
 
 export default function PlacesListScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +24,7 @@ export default function PlacesListScreen() {
       const data = await placesRepository.getAllPlaces();
       setPlaces(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось загрузить места');
+      setError(messageFromError(err, 'places.loadError'));
     } finally {
       setLoading(false);
     }
@@ -35,15 +38,15 @@ export default function PlacesListScreen() {
   );
 
   return (
-    <AppScreen title="Места">
+    <AppScreen title={t('places.title')}>
       <View style={styles.container}>
         {loading ? (
           <LoadingState />
         ) : error ? (
           <EmptyState
-            title="Не удалось загрузить места"
+            title={t('places.loadErrorTitle')}
             message={error}
-            actionLabel="Повторить"
+            actionLabel={t('common.retry')}
             onAction={() => {
               setLoading(true);
               void loadPlaces();
@@ -51,9 +54,9 @@ export default function PlacesListScreen() {
           />
         ) : places.length === 0 ? (
           <EmptyState
-            title="Пока нет мест"
-            message="Добавьте первое место, которое хотите посетить."
-            actionLabel="Добавить место"
+            title={t('places.emptyTitle')}
+            message={t('places.emptyMessage')}
+            actionLabel={t('places.emptyAction')}
             onAction={() => router.push('/places/new')}
           />
         ) : (
@@ -77,10 +80,12 @@ export default function PlacesListScreen() {
                 ) : null}
                 <Text variant="bodySmall" style={styles.meta}>
                   {[
-                    item.visitlater ? 'посетить позже' : null,
-                    item.liked ? 'понравилось' : null,
+                    item.visitlater ? t('places.visitLater') : null,
+                    item.liked ? t('places.liked') : null,
                     item.dd ? formatDd(item.dd, 4) : null,
-                    item.photos.length > 0 ? `фото: ${item.photos.length}` : null,
+                    item.photos.length > 0
+                      ? t('places.photosCount', { count: item.photos.length })
+                      : null,
                   ]
                     .filter(Boolean)
                     .join(' · ')}
@@ -94,7 +99,7 @@ export default function PlacesListScreen() {
           icon="plus"
           style={styles.fab}
           onPress={() => router.push('/places/new')}
-          label="Добавить"
+          label={t('common.add')}
         />
       </View>
     </AppScreen>

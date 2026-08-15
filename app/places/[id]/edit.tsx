@@ -5,6 +5,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import { PlaceForm } from '../../../components/PlaceForm';
@@ -13,10 +14,12 @@ import {
   type Place,
   type PlaceInput,
 } from '../../../src/db';
+import { messageFromError } from '../../../src/i18n/errors';
 
 export default function EditPlaceScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const placeId = Number(id);
 
@@ -35,15 +38,13 @@ export default function EditPlaceScreen() {
           const data = await placesRepository.getPlaceById(placeId);
           if (!cancelled) {
             if (!data) {
-              setError('Место не найдено');
+              setError(t('places.notFound'));
             }
             setPlace(data);
           }
         } catch (err) {
           if (!cancelled) {
-            setError(
-              err instanceof Error ? err.message : 'Не удалось загрузить место',
-            );
+            setError(messageFromError(err, 'places.loadFailed'));
           }
         } finally {
           if (!cancelled) {
@@ -55,7 +56,7 @@ export default function EditPlaceScreen() {
       return () => {
         cancelled = true;
       };
-    }, [placeId]),
+    }, [placeId, t]),
   );
 
   const handleSubmit = async (input: PlaceInput) => {
@@ -64,20 +65,20 @@ export default function EditPlaceScreen() {
   };
 
   return (
-    <AppScreen title="Редактирование">
+    <AppScreen title={t('places.edit')}>
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator animating size="large" />
         </View>
       ) : error || !place ? (
         <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
-          <Text>{error ?? 'Место не найдено'}</Text>
+          <Text>{error ?? t('places.notFound')}</Text>
         </View>
       ) : (
         <PlaceForm
           key={place.id}
           initial={place}
-          submitLabel="Сохранить"
+          submitLabel={t('places.submitSave')}
           onSubmit={handleSubmit}
         />
       )}

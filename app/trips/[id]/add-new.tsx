@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { AppScreen } from '../../../components/AppScreen';
 import { PlaceForm } from '../../../components/PlaceForm';
 import {
@@ -9,6 +10,7 @@ import {
 
 export default function AddNewPlaceToTripScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -24,8 +26,8 @@ export default function AddNewPlaceToTripScreen() {
   };
 
   return (
-    <AppScreen title="Новое место в поездке">
-      <PlaceForm submitLabel="Создать и добавить" onSubmit={handleSubmit} />
+    <AppScreen title={t('trips.newPlaceInTrip')}>
+      <PlaceForm submitLabel={t('trips.createAndAdd')} onSubmit={handleSubmit} />
     </AppScreen>
   );
 }

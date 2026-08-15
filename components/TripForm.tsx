@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   HelperText,
@@ -10,6 +11,7 @@ import {
 } from 'react-native-paper';
 import type { Trip, TripInput } from '../src/db/types';
 import { parseIsoDate } from '../src/dates/iso';
+import { messageFromError } from '../src/i18n/errors';
 
 type TripFormProps = {
   initial?: Trip | null;
@@ -19,6 +21,7 @@ type TripFormProps = {
 
 export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [startDate, setStartDate] = useState(initial?.startDate ?? '');
@@ -31,7 +34,7 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
 
   const handleSubmit = async () => {
     if (titleInvalid) {
-      setError('Укажите название поездки');
+      setError(t('trips.titleRequired'));
       return;
     }
 
@@ -39,12 +42,12 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
     const parsedEnd = parseIsoDate(endDate);
 
     if (parsedStart === 'invalid' || parsedEnd === 'invalid') {
-      setError('Даты в формате ГГГГ-ММ-ДД, например 2026-08-14');
+      setError(t('trips.dateInvalid'));
       return;
     }
 
     if (parsedStart && parsedEnd && parsedStart > parsedEnd) {
-      setError('Дата начала не может быть позже даты окончания');
+      setError(t('trips.dateOrder'));
       return;
     }
 
@@ -59,7 +62,7 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
         current,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить');
+      setError(messageFromError(err, 'errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -72,14 +75,14 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
     >
       <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
         <TextInput
-          label="Название *"
+          label={t('trips.titleLabel')}
           value={title}
           onChangeText={setTitle}
           mode="outlined"
           style={styles.input}
         />
         <TextInput
-          label="Описание"
+          label={t('trips.descriptionLabel')}
           value={description}
           onChangeText={setDescription}
           mode="outlined"
@@ -88,8 +91,8 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
           style={styles.input}
         />
         <TextInput
-          label="Дата начала"
-          placeholder="2026-08-14"
+          label={t('trips.startDate')}
+          placeholder={t('trips.datePlaceholder')}
           value={startDate}
           onChangeText={setStartDate}
           mode="outlined"
@@ -98,8 +101,8 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
           style={styles.input}
         />
         <TextInput
-          label="Дата окончания"
-          placeholder="2026-08-20"
+          label={t('trips.endDate')}
+          placeholder={t('trips.datePlaceholder')}
           value={endDate}
           onChangeText={setEndDate}
           mode="outlined"
@@ -107,13 +110,13 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
           autoCorrect={false}
           style={styles.input}
         />
-        <HelperText type="info">Формат дат: ГГГГ-ММ-ДД</HelperText>
+        <HelperText type="info">{t('trips.dateHint')}</HelperText>
 
         <View style={styles.row}>
           <View style={styles.rowText}>
-            <Text>Текущая поездка</Text>
+            <Text>{t('trips.currentTrip')}</Text>
             <Text variant="bodySmall" style={styles.hint}>
-              Только одна поездка может быть текущей
+              {t('trips.currentTripHint')}
             </Text>
           </View>
           <Switch value={current} onValueChange={setCurrent} />

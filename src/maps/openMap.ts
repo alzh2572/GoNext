@@ -1,9 +1,7 @@
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import type { DecimalDegrees } from '../db/types';
-
-const FALLBACK_MESSAGE =
-  'Не удалось открыть карту или навигатор. Установите приложение Карт / Google Maps. Офлайн-карты зависят от этого приложения, GoNext не падает.';
+import i18n from '../i18n';
 
 async function openFirstAvailable(urls: string[]): Promise<void> {
   let lastError: unknown;
@@ -18,9 +16,9 @@ async function openFirstAvailable(urls: string[]): Promise<void> {
   }
 
   if (lastError instanceof Error && lastError.message) {
-    throw new Error(FALLBACK_MESSAGE);
+    throw new Error(i18n.t('maps.fallback'));
   }
-  throw new Error(FALLBACK_MESSAGE);
+  throw new Error(i18n.t('maps.fallback'));
 }
 
 /** Открыть точку на карте. Сначала системные схемы, HTTPS — запасной вариант. */
@@ -29,7 +27,9 @@ export async function openPlaceOnMap(
   label?: string,
 ): Promise<void> {
   const { latitude, longitude } = dd;
-  const encodedLabel = encodeURIComponent(label?.trim() || 'Место');
+  const encodedLabel = encodeURIComponent(
+    label?.trim() || i18n.t('maps.defaultLabel'),
+  );
 
   const urls =
     Platform.OS === 'ios'
@@ -52,7 +52,9 @@ export async function openPlaceInNavigator(
   label?: string,
 ): Promise<void> {
   const { latitude, longitude } = dd;
-  const encodedLabel = encodeURIComponent(label?.trim() || 'Место');
+  const encodedLabel = encodeURIComponent(
+    label?.trim() || i18n.t('maps.defaultLabel'),
+  );
   const destination = `${latitude},${longitude}`;
 
   const urls =

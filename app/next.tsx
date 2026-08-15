@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Button, Chip, Text } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
 import { MapActions } from '../components/MapActions';
@@ -17,6 +18,7 @@ import {
 } from '../src/db';
 import { formatDd } from '../src/maps/dd';
 import { todayIsoDate } from '../src/dates/iso';
+import { messageFromError } from '../src/i18n/errors';
 
 type ScreenState =
   | { kind: 'loading' }
@@ -28,6 +30,7 @@ type ScreenState =
 
 export default function NextPlaceScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [state, setState] = useState<ScreenState>({ kind: 'loading' });
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -57,8 +60,7 @@ export default function NextPlaceScreen() {
     } catch (err) {
       setState({
         kind: 'error',
-        message:
-          err instanceof Error ? err.message : 'Не удалось загрузить следующее место',
+        message: messageFromError(err, 'next.loadError'),
       });
     }
   }, []);
@@ -80,50 +82,48 @@ export default function NextPlaceScreen() {
       });
       await loadNext();
     } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : 'Не удалось отметить посещение',
-      );
+      setActionError(messageFromError(err, 'next.markFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <AppScreen title="Следующее место">
+    <AppScreen title={t('next.title')}>
       {state.kind === 'loading' ? (
         <LoadingState />
       ) : state.kind === 'error' ? (
         <EmptyState
-          title="Не удалось загрузить"
+          title={t('next.loadErrorTitle')}
           message={state.message}
-          actionLabel="Повторить"
+          actionLabel={t('common.retry')}
           onAction={() => void loadNext()}
         />
       ) : state.kind === 'no-current' ? (
         <EmptyState
-          title="Нет текущей поездки"
-          message="Отметьте поездку как текущую, чтобы видеть следующее место маршрута."
-          actionLabel="К поездкам"
+          title={t('next.noCurrentTitle')}
+          message={t('next.noCurrentMessage')}
+          actionLabel={t('next.toTrips')}
           onAction={() => router.push('/trips')}
         />
       ) : state.kind === 'empty-route' ? (
         <EmptyState
           title={state.trip.title}
-          message="В текущей поездке пока нет мест."
-          actionLabel="Добавить место"
+          message={t('next.emptyRouteMessage')}
+          actionLabel={t('trips.addPlace')}
           onAction={() => router.push(`/trips/${state.trip.id}/add`)}
         />
       ) : state.kind === 'all-visited' ? (
         <EmptyState
           title={state.trip.title}
-          message="Все места маршрута посещены."
-          actionLabel="Открыть дневник"
+          message={t('next.allVisited')}
+          actionLabel={t('next.openDiary')}
           onAction={() => router.push(`/trips/${state.trip.id}`)}
         />
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
           <ScreenPanel>
-            <Chip compact>текущая поездка</Chip>
+            <Chip compact>{t('next.currentTrip')}</Chip>
             <Text variant="titleSmall" style={styles.muted}>
               {state.trip.title}
             </Text>
@@ -131,16 +131,16 @@ export default function NextPlaceScreen() {
             {state.stop.place.description ? (
               <Text variant="bodyLarge">{state.stop.place.description}</Text>
             ) : (
-              <Text style={styles.muted}>Без описания</Text>
+              <Text style={styles.muted}>{t('next.noDescription')}</Text>
             )}
 
             <Text variant="titleSmall" style={styles.section}>
-              Координаты (DD)
+              {t('next.coordinates')}
             </Text>
             {state.stop.place.dd ? (
               <Text>{formatDd(state.stop.place.dd)}</Text>
             ) : (
-              <Text style={styles.muted}>Не указаны</Text>
+              <Text style={styles.muted}>{t('next.notSpecified')}</Text>
             )}
 
             {actionError ? <Text style={styles.error}>{actionError}</Text> : null}
@@ -156,14 +156,14 @@ export default function NextPlaceScreen() {
               disabled={busy}
               onPress={() => void markVisited(state.stop)}
             >
-              Отметить посещённым
+              {t('next.markVisited')}
             </Button>
             <Button
               onPress={() =>
                 router.push(`/trips/${state.trip.id}/stops/${state.stop.id}`)
               }
             >
-              Подробнее
+              {t('next.details')}
             </Button>
           </ScreenPanel>
         </ScrollView>

@@ -12,6 +12,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
@@ -28,6 +29,7 @@ import {
   type TripPlaceWithPlace,
 } from '../../../../src/db';
 import { parseIsoDate, todayIsoDate } from '../../../../src/dates/iso';
+import { messageFromError } from '../../../../src/i18n/errors';
 import {
   canStorePhotosLocally,
   deletePhotoFile,
@@ -39,6 +41,7 @@ import { MapActions } from '../../../../components/MapActions';
 export default function TripStopScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { id, stopId } = useLocalSearchParams<{ id: string; stopId: string }>();
   const tripId = Number(id);
   const tripPlaceId = Number(stopId);
@@ -57,7 +60,7 @@ export default function TripStopScreen() {
       setError(null);
       const data = await tripPlacesRepository.getTripPlaceWithPlace(tripPlaceId);
       if (!data || data.tripId !== tripId) {
-        setError('Место поездки не найдено');
+        setError(t('stop.notFound'));
         setStop(null);
         return;
       }
@@ -67,11 +70,11 @@ export default function TripStopScreen() {
       setNotes(data.notes);
       setPhotos(data.photos);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки');
+      setError(messageFromError(err, 'trips.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [tripId, tripPlaceId]);
+  }, [tripId, tripPlaceId, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -82,7 +85,7 @@ export default function TripStopScreen() {
 
   const pickImage = async (fromCamera: boolean) => {
     if (!canStorePhotosLocally()) {
-      setError('Фото доступны только на мобильном устройстве');
+      setError(t('photos.mobileOnly'));
       return;
     }
 
@@ -91,7 +94,7 @@ export default function TripStopScreen() {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      setError(fromCamera ? 'Нет доступа к камере' : 'Нет доступа к галерее');
+      setError(fromCamera ? t('photos.noCamera') : t('photos.noGallery'));
       return;
     }
 
@@ -119,7 +122,7 @@ export default function TripStopScreen() {
       );
       setPhotos((prev) => [...prev, savedUri]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить фото');
+      setError(messageFromError(err, 'photos.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -140,16 +143,16 @@ export default function TripStopScreen() {
       return;
     }
 
-    Alert.alert('Удалить фото?', 'Фото посещения будет удалено с устройства.', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Удалить', style: 'destructive', onPress: () => void doRemove() },
+    Alert.alert(t('stop.deletePhotoTitle'), t('stop.deletePhotoMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => void doRemove() },
     ]);
   };
 
   const handleSave = async () => {
     const parsedDate = parseIsoDate(visitDate);
     if (parsedDate === 'invalid') {
-      setError('Дата визита в формате ГГГГ-ММ-ДД');
+      setError(t('stop.visitDateInvalid'));
       return;
     }
 
@@ -164,7 +167,7 @@ export default function TripStopScreen() {
       });
       router.replace(`/trips/${tripId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить');
+      setError(messageFromError(err, 'errors.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -179,7 +182,7 @@ export default function TripStopScreen() {
         await deletePhotoFiles(toDelete);
         router.replace(`/trips/${tripId}`);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Не удалось удалить');
+        setError(messageFromError(err, 'trips.deleteFailed'));
       } finally {
         setBusy(false);
       }
@@ -190,14 +193,10 @@ export default function TripStopScreen() {
       return;
     }
 
-    Alert.alert(
-      'Убрать из маршрута?',
-      'Место останется в базе мест, заметки посещения будут удалены.',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { text: 'Убрать', style: 'destructive', onPress: () => void runDelete() },
-      ],
-    );
+    Alert.alert(t('stop.removeConfirmTitle'), t('stop.removeConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('stop.remove'), style: 'destructive', onPress: () => void runDelete() },
+    ]);
   };
 
   const onVisitedChange = (value: boolean) => {
@@ -208,7 +207,7 @@ export default function TripStopScreen() {
   };
 
   return (
-    <AppScreen title={stop?.place.name ?? 'Место в поездке'}>
+    <AppScreen title={stop?.place.name ?? t('stop.title')}>
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator animating size="large" />
@@ -228,12 +227,12 @@ export default function TripStopScreen() {
             ) : null}
 
             <View style={styles.row}>
-              <Text>Посещено</Text>
+              <Text>{t('stop.visited')}</Text>
               <Switch value={visited} onValueChange={onVisitedChange} />
             </View>
             <TextInput
-              label="Дата визита"
-              placeholder="2026-08-14"
+              label={t('stop.visitDate')}
+              placeholder={t('trips.datePlaceholder')}
               value={visitDate}
               onChangeText={setVisitDate}
               mode="outlined"
@@ -242,7 +241,7 @@ export default function TripStopScreen() {
               style={styles.input}
             />
             <TextInput
-              label="Заметки"
+              label={t('stop.notes')}
               value={notes}
               onChangeText={setNotes}
               mode="outlined"
@@ -252,7 +251,7 @@ export default function TripStopScreen() {
             />
 
             <Text variant="titleSmall" style={styles.section}>
-              Фото посещения
+              {t('stop.visitPhotos')}
             </Text>
             <View style={styles.photoActions}>
               <Button
@@ -260,14 +259,14 @@ export default function TripStopScreen() {
                 disabled={busy}
                 onPress={() => void pickImage(false)}
               >
-                Галерея
+                {t('photos.gallery')}
               </Button>
               <Button
                 mode="outlined"
                 disabled={busy}
                 onPress={() => void pickImage(true)}
               >
-                Камера
+                {t('photos.camera')}
               </Button>
             </View>
             <View style={styles.photos}>
@@ -275,7 +274,7 @@ export default function TripStopScreen() {
                 <View key={uri} style={styles.photoWrap}>
                   <Image source={{ uri }} style={styles.photo} />
                   <Button compact onPress={() => removePhoto(uri)}>
-                    Удалить
+                    {t('common.delete')}
                   </Button>
                 </View>
               ))}
@@ -289,7 +288,7 @@ export default function TripStopScreen() {
               disabled={busy}
               onPress={() => void handleSave()}
             >
-              Сохранить
+              {t('common.save')}
             </Button>
             <MapActions dd={stop.place.dd} label={stop.place.name} disabled={busy} />
             <Button
@@ -298,7 +297,7 @@ export default function TripStopScreen() {
               disabled={busy}
               onPress={confirmRemoveFromTrip}
             >
-              Убрать из маршрута
+              {t('stop.removeFromRoute')}
             </Button>
           </View>
         </ScrollView>

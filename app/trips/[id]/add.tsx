@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import {
@@ -8,10 +9,12 @@ import {
   tripPlacesRepository,
   type Place,
 } from '../../../src/db';
+import { messageFromError } from '../../../src/i18n/errors';
 
 export default function AddTripPlaceScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -30,7 +33,7 @@ export default function AddTripPlaceScreen() {
       const usedIds = new Set(route.map((item) => item.placeId));
       setPlaces(allPlaces.filter((place) => !usedIds.has(place.id)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось загрузить места');
+      setError(messageFromError(err, 'places.loadError'));
     } finally {
       setLoading(false);
     }
@@ -55,24 +58,24 @@ export default function AddTripPlaceScreen() {
       });
       router.replace(`/trips/${tripId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось добавить место');
+      setError(messageFromError(err, 'trips.addFailed'));
     } finally {
       setBusyId(null);
     }
   };
 
   return (
-    <AppScreen title="Добавить в маршрут">
+    <AppScreen title={t('trips.addToRoute')}>
       <View style={styles.container}>
         <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
           <Button
             mode="contained"
             onPress={() => router.push(`/trips/${tripId}/add-new`)}
           >
-            Создать новое место
+            {t('trips.createNewPlace')}
           </Button>
           <Text variant="bodyMedium" style={styles.hint}>
-            Или выберите место из базы:
+            {t('trips.orChoose')}
           </Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
@@ -83,7 +86,7 @@ export default function AddTripPlaceScreen() {
           </View>
         ) : places.length === 0 ? (
           <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
-            <Text>Нет свободных мест в базе. Создайте новое.</Text>
+            <Text>{t('trips.noFreePlaces')}</Text>
           </View>
         ) : (
           <FlatList

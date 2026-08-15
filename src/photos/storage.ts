@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import i18n from '../i18n';
 
 const PHOTOS_DIR_NAME = 'photos';
 const WEB_PHOTOS_PLACEHOLDER = 'web://photos/';
@@ -45,7 +46,7 @@ export async function savePhotoFile(
   folder: string,
 ): Promise<string> {
   if (!isFileSystemAvailable()) {
-    throw new Error('Сохранение фото доступно только на мобильном устройстве');
+    throw new Error(i18n.t('photos.mobileOnly'));
   }
 
   const root = await ensurePhotosDirectory();
@@ -62,7 +63,7 @@ export async function savePhotoFile(
 
   const sourceInfo = await FileSystem.getInfoAsync(sourceUri);
   if (!sourceInfo.exists) {
-    throw new Error('Исходный файл фото не найден');
+    throw new Error(i18n.t('photos.sourceNotFound'));
   }
 
   await FileSystem.copyAsync({ from: sourceUri, to: destination });

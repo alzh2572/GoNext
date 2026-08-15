@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Chip, FAB, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
 import { EmptyState, LoadingState } from '../../components/ScreenPanel';
@@ -10,24 +12,26 @@ import {
   type Trip,
 } from '../../src/db';
 import { formatTripPeriod } from '../../src/dates/iso';
+import { messageFromError } from '../../src/i18n/errors';
 import { cardShape } from '../../src/theme';
 
-function tripRole(total: number, visited: number): string {
+function tripRole(total: number, visited: number, t: TFunction): string {
   if (total === 0) {
-    return 'пустой маршрут';
+    return t('trips.roleEmpty');
   }
   if (visited === 0) {
-    return 'план';
+    return t('trips.rolePlan');
   }
   if (visited === total) {
-    return 'дневник';
+    return t('trips.roleDiary');
   }
-  return 'план и дневник';
+  return t('trips.roleBoth');
 }
 
 export default function TripsListScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { t } = useTranslation();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [stats, setStats] = useState<
     Record<number, { total: number; visited: number }>
@@ -45,9 +49,7 @@ export default function TripsListScreen() {
       setTrips(data);
       setStats(placeStats);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Не удалось загрузить поездки',
-      );
+      setError(messageFromError(err, 'trips.loadError'));
     } finally {
       setLoading(false);
     }
@@ -61,15 +63,15 @@ export default function TripsListScreen() {
   );
 
   return (
-    <AppScreen title="Поездки">
+    <AppScreen title={t('trips.title')}>
       <View style={styles.container}>
         {loading ? (
           <LoadingState />
         ) : error ? (
           <EmptyState
-            title="Не удалось загрузить поездки"
+            title={t('trips.loadErrorTitle')}
             message={error}
-            actionLabel="Повторить"
+            actionLabel={t('common.retry')}
             onAction={() => {
               setLoading(true);
               void loadTrips();
@@ -77,9 +79,9 @@ export default function TripsListScreen() {
           />
         ) : trips.length === 0 ? (
           <EmptyState
-            title="Пока нет поездок"
-            message="Создайте поездку и соберите маршрут из мест."
-            actionLabel="Добавить поездку"
+            title={t('trips.emptyTitle')}
+            message={t('trips.emptyMessage')}
+            actionLabel={t('trips.emptyAction')}
             onAction={() => router.push('/trips/new')}
           />
         ) : (
@@ -102,16 +104,19 @@ export default function TripsListScreen() {
                       {item.title}
                     </Text>
                     {item.current ? (
-                      <Chip compact>текущая</Chip>
+                      <Chip compact>{t('trips.current')}</Chip>
                     ) : null}
                   </View>
                   <Text variant="bodyMedium" style={styles.hint}>
                     {formatTripPeriod(item.startDate, item.endDate)}
                   </Text>
                   <Text variant="bodySmall" style={styles.meta}>
-                    {tripRole(itemStats.total, itemStats.visited)}
+                    {tripRole(itemStats.total, itemStats.visited, t)}
                     {itemStats.total > 0
-                      ? ` · ${itemStats.visited} из ${itemStats.total} посещено`
+                      ? ` · ${t('trips.visitedOf', {
+                          visited: itemStats.visited,
+                          total: itemStats.total,
+                        })}`
                       : ''}
                   </Text>
                 </Pressable>
@@ -124,7 +129,7 @@ export default function TripsListScreen() {
           icon="plus"
           style={styles.fab}
           onPress={() => router.push('/trips/new')}
-          label="Добавить"
+          label={t('common.add')}
         />
       </View>
     </AppScreen>

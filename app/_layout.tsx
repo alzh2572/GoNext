@@ -7,6 +7,7 @@ import {
   ThemePreferenceProvider,
   useAppTheme,
 } from '../src/context/ThemePreference';
+import { I18nProvider } from '../src/i18n/I18nProvider';
 import { getPaperTheme } from '../src/theme';
 
 function ThemedApp() {
@@ -25,9 +26,11 @@ function ThemedApp() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ThemePreferenceProvider>
-        <ThemedApp />
-      </ThemePreferenceProvider>
+      <I18nProvider>
+        <ThemePreferenceProvider>
+          <ThemedApp />
+        </ThemePreferenceProvider>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

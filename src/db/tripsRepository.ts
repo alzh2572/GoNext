@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { getDatabase } from './database';
 import { mapTrip } from './mappers';
 import type { Trip, TripInput } from './types';
@@ -74,7 +75,7 @@ export async function createTrip(input: TripInput): Promise<Trip> {
 
   const trip = await getTripById(tripId);
   if (!trip) {
-    throw new Error('Не удалось создать поездку');
+    throw new Error(i18n.t('trips.createFailed'));
   }
   return trip;
 }
@@ -106,7 +107,7 @@ export async function updateTrip(id: number, input: TripInput): Promise<Trip> {
 
   const trip = await getTripById(id);
   if (!trip) {
-    throw new Error('Поездка не найдена');
+    throw new Error(i18n.t('trips.notFound'));
   }
   return trip;
 }
@@ -114,7 +115,7 @@ export async function updateTrip(id: number, input: TripInput): Promise<Trip> {
 export async function setCurrentTrip(id: number): Promise<Trip> {
   const existing = await getTripById(id);
   if (!existing) {
-    throw new Error('Поездка не найдена');
+    throw new Error(i18n.t('trips.notFound'));
   }
 
   const db = await getDatabase();
@@ -125,7 +126,7 @@ export async function setCurrentTrip(id: number): Promise<Trip> {
 
   const trip = await getTripById(id);
   if (!trip) {
-    throw new Error('Поездка не найдена');
+    throw new Error(i18n.t('trips.notFound'));
   }
   return trip;
 }
@@ -134,7 +135,7 @@ export async function deleteTrip(id: number): Promise<void> {
   const db = await getDatabase();
   const result = await db.runAsync('DELETE FROM trips WHERE id = ?', id);
   if (result.changes === 0) {
-    throw new Error('Поездка не найдена');
+    throw new Error(i18n.t('trips.notFound'));
   }
 }
 

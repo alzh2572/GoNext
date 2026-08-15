@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import type { DecimalDegrees } from '../db/types';
+import i18n from '../i18n';
 
 /** Текущие координаты устройства в формате Decimal Degrees. */
 export async function getCurrentDecimalDegrees(): Promise<DecimalDegrees> {
@@ -10,7 +11,7 @@ export async function getCurrentDecimalDegrees(): Promise<DecimalDegrees> {
       : await Location.requestForegroundPermissionsAsync();
 
   if (permission.status !== 'granted') {
-    throw new Error('Нет доступа к геолокации. Разрешите доступ в настройках телефона.');
+    throw new Error(i18n.t('maps.locationDenied'));
   }
 
   const position = await Location.getCurrentPositionAsync({
