@@ -15,6 +15,7 @@ import {
   Chip,
   IconButton,
   Text,
+  useTheme,
 } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import {
@@ -42,6 +43,7 @@ function tripRoleLabel(stops: TripPlaceWithPlace[]): string {
 
 export default function TripDetailsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -50,6 +52,8 @@ export default function TripDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const surface = { backgroundColor: theme.colors.surface };
 
   const loadTrip = useCallback(async () => {
     if (!Number.isFinite(tripId)) {
@@ -153,13 +157,13 @@ export default function TripDetailsScreen() {
           <ActivityIndicator animating size="large" />
         </View>
       ) : error && !trip ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, surface]}>
           <Text>{error}</Text>
           <Button onPress={() => router.replace('/trips')}>К списку</Button>
         </View>
       ) : trip ? (
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.panel}>
+          <View style={[styles.panel, surface]}>
             <View style={styles.chips}>
               <Chip compact>{tripRoleLabel(stops)}</Chip>
               {trip.current ? <Chip compact>текущая</Chip> : null}
@@ -189,7 +193,7 @@ export default function TripDetailsScreen() {
           </View>
 
           {stops.length === 0 ? (
-            <View style={styles.panel}>
+            <View style={[styles.panel, surface]}>
               <Text variant="titleMedium">Маршрут пуст</Text>
               <Text style={styles.muted}>
                 Добавьте места из базы или создайте новое место сразу в поездке.
@@ -199,7 +203,7 @@ export default function TripDetailsScreen() {
             stops.map((stop, index) => (
               <Pressable
                 key={stop.id}
-                style={styles.stop}
+                style={[styles.stop, surface]}
                 onPress={() =>
                   router.push(`/trips/${trip.id}/stops/${stop.id}`)
                 }
@@ -275,7 +279,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 10,
@@ -286,7 +289,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stop: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 6,

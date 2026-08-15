@@ -1,15 +1,16 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { FAB, Text } from 'react-native-paper';
+import { FAB, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
 import { EmptyState, LoadingState } from '../../components/ScreenPanel';
 import { placesRepository, type Place } from '../../src/db';
 import { formatDd } from '../../src/maps/dd';
-import { cardSurface } from '../../src/theme';
+import { cardShape } from '../../src/theme';
 
 export default function PlacesListScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +63,10 @@ export default function PlacesListScreen() {
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
               <Pressable
-                style={styles.item}
+                style={[
+                  styles.item,
+                  { backgroundColor: theme.colors.surface },
+                ]}
                 onPress={() => router.push(`/places/${item.id}`)}
               >
                 <Text variant="titleMedium">{item.name}</Text>
@@ -107,7 +111,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   item: {
-    ...cardSurface,
+    ...cardShape,
     gap: 4,
   },
   hint: {

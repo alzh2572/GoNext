@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { initDatabase } from '../db';
 import { ensurePhotosDirectory } from '../photos/storage';
 import { ScreenPanel } from '../../components/ScreenPanel';
@@ -10,6 +10,7 @@ type DatabaseProviderProps = {
 };
 
 export function DatabaseProvider({ children }: DatabaseProviderProps) {
+  const theme = useTheme();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
@@ -49,7 +50,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
 
   if (error) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <ScreenPanel>
           <Text variant="titleMedium">Ошибка хранилища</Text>
           <Text style={styles.errorText}>{error}</Text>
@@ -63,7 +64,7 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
 
   if (!ready) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator animating size="large" />
         <Text style={styles.loadingText}>Подготовка локальных данных…</Text>
       </View>

@@ -14,6 +14,7 @@ import {
   Button,
   Chip,
   Text,
+  useTheme,
 } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import { MapActions } from '../../../components/MapActions';
@@ -23,6 +24,7 @@ import { formatDd } from '../../../src/maps/dd';
 
 export default function PlaceDetailsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const placeId = Number(id);
 
@@ -108,13 +110,13 @@ export default function PlaceDetailsScreen() {
           <ActivityIndicator animating size="large" />
         </View>
       ) : error && !place ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, { backgroundColor: theme.colors.surface, margin: 16 }]}>
           <Text>{error}</Text>
           <Button onPress={() => router.replace('/places')}>К списку</Button>
         </View>
       ) : place ? (
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.panel}>
+          <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
             <Text variant="headlineSmall">{place.name}</Text>
             {place.description ? (
               <Text variant="bodyLarge">{place.description}</Text>
@@ -192,7 +194,6 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 10,

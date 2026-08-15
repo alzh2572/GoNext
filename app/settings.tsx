@@ -2,15 +2,18 @@ import { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 import { useFocusEffect } from 'expo-router';
-import { Button, Divider, Text } from 'react-native-paper';
+import { Button, Divider, SegmentedButtons, Text } from 'react-native-paper';
 import { AppScreen } from '../components/AppScreen';
 import { ScreenPanel } from '../components/ScreenPanel';
+import { useAppTheme } from '../src/context/ThemePreference';
 import { placesRepository, resetAllData, tripsRepository } from '../src/db';
 import { clearPhotosDirectory } from '../src/photos/storage';
+import type { ThemeMode } from '../src/theme';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 export default function SettingsScreen() {
+  const { mode, setMode } = useAppTheme();
   const [placesCount, setPlacesCount] = useState(0);
   const [tripsCount, setTripsCount] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
@@ -73,6 +76,21 @@ export default function SettingsScreen() {
   return (
     <AppScreen title="Настройки">
       <ScrollView contentContainerStyle={styles.scroll}>
+        <ScreenPanel>
+          <Text variant="titleMedium">Оформление</Text>
+          <SegmentedButtons
+            value={mode}
+            onValueChange={(value) => setMode(value as ThemeMode)}
+            buttons={[
+              { value: 'light', label: 'Светлая' },
+              { value: 'dark', label: 'Тёмная' },
+            ]}
+          />
+          <Text variant="bodySmall" style={styles.muted}>
+            В тёмной теме фоновая картинка скрывается.
+          </Text>
+        </ScreenPanel>
+
         <ScreenPanel>
           <Text variant="titleMedium">О приложении</Text>
           <Text variant="bodyMedium">

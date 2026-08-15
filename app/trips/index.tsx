@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Chip, FAB, Text } from 'react-native-paper';
+import { Chip, FAB, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../components/AppScreen';
 import { EmptyState, LoadingState } from '../../components/ScreenPanel';
 import {
@@ -10,7 +10,7 @@ import {
   type Trip,
 } from '../../src/db';
 import { formatTripPeriod } from '../../src/dates/iso';
-import { cardSurface } from '../../src/theme';
+import { cardShape } from '../../src/theme';
 
 function tripRole(total: number, visited: number): string {
   if (total === 0) {
@@ -27,6 +27,7 @@ function tripRole(total: number, visited: number): string {
 
 export default function TripsListScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [stats, setStats] = useState<
     Record<number, { total: number; visited: number }>
@@ -90,7 +91,10 @@ export default function TripsListScreen() {
               const itemStats = stats[item.id] ?? { total: 0, visited: 0 };
               return (
                 <Pressable
-                  style={styles.item}
+                  style={[
+                    styles.item,
+                    { backgroundColor: theme.colors.surface },
+                  ]}
                   onPress={() => router.push(`/trips/${item.id}`)}
                 >
                   <View style={styles.titleRow}>
@@ -137,7 +141,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   item: {
-    ...cardSurface,
+    ...cardShape,
     gap: 4,
   },
   titleRow: {

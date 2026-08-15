@@ -5,7 +5,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
-import { ActivityIndicator, Text } from 'react-native-paper';
+import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import { PlaceForm } from '../../../components/PlaceForm';
 import {
@@ -16,6 +16,7 @@ import {
 
 export default function EditPlaceScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const placeId = Number(id);
 
@@ -69,7 +70,7 @@ export default function EditPlaceScreen() {
           <ActivityIndicator animating size="large" />
         </View>
       ) : error || !place ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
           <Text>{error ?? 'Место не найдено'}</Text>
         </View>
       ) : (
@@ -94,6 +95,5 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
   },
 });

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { ActivityIndicator, Button, Text } from 'react-native-paper';
-import { cardSurface } from '../src/theme';
+import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
+import { cardShape } from '../src/theme';
 
 type ScreenPanelProps = {
   children: ReactNode;
@@ -9,7 +9,19 @@ type ScreenPanelProps = {
 };
 
 export function ScreenPanel({ children, style }: ScreenPanelProps) {
-  return <View style={[styles.panel, style]}>{children}</View>;
+  const theme = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.panel,
+        { backgroundColor: theme.colors.surface },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 type EmptyStateProps = {
@@ -54,7 +66,7 @@ export function LoadingState() {
 
 const styles = StyleSheet.create({
   panel: {
-    ...cardSurface,
+    ...cardShape,
     gap: 10,
   },
   wrap: {

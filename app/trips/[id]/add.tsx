@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Button, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import {
   placesRepository,
@@ -11,6 +11,7 @@ import {
 
 export default function AddTripPlaceScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -63,7 +64,7 @@ export default function AddTripPlaceScreen() {
   return (
     <AppScreen title="Добавить в маршрут">
       <View style={styles.container}>
-        <View style={styles.panel}>
+        <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
           <Button
             mode="contained"
             onPress={() => router.push(`/trips/${tripId}/add-new`)}
@@ -81,7 +82,7 @@ export default function AddTripPlaceScreen() {
             <ActivityIndicator animating size="large" />
           </View>
         ) : places.length === 0 ? (
-          <View style={styles.panel}>
+          <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
             <Text>Нет свободных мест в базе. Создайте новое.</Text>
           </View>
         ) : (
@@ -91,7 +92,7 @@ export default function AddTripPlaceScreen() {
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
               <Pressable
-                style={styles.item}
+                style={[styles.item, { backgroundColor: theme.colors.surface }]}
                 disabled={busyId != null}
                 onPress={() => void addPlace(item.id)}
               >
@@ -131,13 +132,11 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
     gap: 10,
   },
   item: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
     gap: 4,
   },
   hint: {

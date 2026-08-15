@@ -5,13 +5,14 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
-import { ActivityIndicator, Text } from 'react-native-paper';
+import { ActivityIndicator, Text, useTheme } from 'react-native-paper';
 import { AppScreen } from '../../../components/AppScreen';
 import { TripForm } from '../../../components/TripForm';
 import { tripsRepository, type Trip, type TripInput } from '../../../src/db';
 
 export default function EditTripScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const tripId = Number(id);
 
@@ -65,7 +66,7 @@ export default function EditTripScreen() {
           <ActivityIndicator animating size="large" />
         </View>
       ) : error || !trip ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
           <Text>{error ?? 'Поездка не найдена'}</Text>
         </View>
       ) : (
@@ -90,6 +91,5 @@ const styles = StyleSheet.create({
     margin: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.92)',
   },
 });

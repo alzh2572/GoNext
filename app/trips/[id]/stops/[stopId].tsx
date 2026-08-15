@@ -20,6 +20,7 @@ import {
   Switch,
   Text,
   TextInput,
+  useTheme,
 } from 'react-native-paper';
 import { AppScreen } from '../../../../components/AppScreen';
 import {
@@ -37,6 +38,7 @@ import { MapActions } from '../../../../components/MapActions';
 
 export default function TripStopScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id, stopId } = useLocalSearchParams<{ id: string; stopId: string }>();
   const tripId = Number(id);
   const tripPlaceId = Number(stopId);
@@ -212,7 +214,7 @@ export default function TripStopScreen() {
           <ActivityIndicator animating size="large" />
         </View>
       ) : error && !stop ? (
-        <View style={styles.panel}>
+        <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
           <Text>{error}</Text>
         </View>
       ) : stop ? (
@@ -220,7 +222,7 @@ export default function TripStopScreen() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.panel}>
+          <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
             {stop.place.description ? (
               <Text variant="bodyLarge">{stop.place.description}</Text>
             ) : null}
@@ -316,7 +318,6 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 10,
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   section: {
     marginTop: 4,

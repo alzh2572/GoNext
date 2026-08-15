@@ -13,6 +13,7 @@ import {
   Switch,
   Text,
   TextInput,
+  useTheme,
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import type { Place, PlaceInput } from '../src/db/types';
@@ -31,6 +32,7 @@ type PlaceFormProps = {
 };
 
 export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
+  const theme = useTheme();
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [visitlater, setVisitlater] = useState(initial?.visitlater ?? true);
@@ -163,7 +165,9 @@ export function PlaceForm({ initial, submitLabel, onSubmit }: PlaceFormProps) {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      <View style={styles.panel}>
+      <View
+        style={[styles.panel, { backgroundColor: theme.colors.surface }]}
+      >
         <TextInput
           label="Название *"
           value={name}
@@ -268,13 +272,12 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 8,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   row: {
     flexDirection: 'row',

@@ -6,6 +6,7 @@ import {
   Switch,
   Text,
   TextInput,
+  useTheme,
 } from 'react-native-paper';
 import type { Trip, TripInput } from '../src/db/types';
 import { parseIsoDate } from '../src/dates/iso';
@@ -17,6 +18,7 @@ type TripFormProps = {
 };
 
 export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
+  const theme = useTheme();
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [startDate, setStartDate] = useState(initial?.startDate ?? '');
@@ -68,7 +70,7 @@ export function TripForm({ initial, submitLabel, onSubmit }: TripFormProps) {
       contentContainerStyle={styles.scroll}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.panel}>
+      <View style={[styles.panel, { backgroundColor: theme.colors.surface }]}>
         <TextInput
           label="Название *"
           value={title}
@@ -138,13 +140,12 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   panel: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 12,
     padding: 16,
     gap: 8,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
   },
   row: {
     flexDirection: 'row',
