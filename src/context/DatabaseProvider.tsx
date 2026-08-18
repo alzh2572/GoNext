@@ -47,39 +47,54 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     };
   }, [retryKey]);
 
-  if (error) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <ScreenPanel>
-          <Text variant="titleMedium">{t('storage.errorTitle')}</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <Button mode="contained" onPress={() => setRetryKey((value) => value + 1)}>
-            {t('common.retry')}
-          </Button>
-        </ScreenPanel>
-      </View>
-    );
-  }
-
-  if (!ready) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.background }]}>
-        <ActivityIndicator animating size="large" />
-        <Text style={styles.loadingText}>{t('storage.loading')}</Text>
-      </View>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <View style={styles.root}>
+      {children}
+      {error ? (
+        <View
+          style={[
+            styles.overlay,
+            { backgroundColor: theme.colors.background },
+          ]}
+        >
+          <ScreenPanel>
+            <Text variant="titleMedium">{t('storage.errorTitle')}</Text>
+            <Text style={styles.errorText}>{error}</Text>
+            <Button
+              mode="contained"
+              onPress={() => setRetryKey((value) => value + 1)}
+            >
+              {t('common.retry')}
+            </Button>
+          </ScreenPanel>
+        </View>
+      ) : null}
+      {!ready && !error ? (
+        <View
+          style={[
+            styles.overlay,
+            { backgroundColor: theme.colors.background },
+          ]}
+        >
+          <ActivityIndicator animating size="large" />
+          <Text style={styles.loadingText}>{t('storage.loading')}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  center: {
+  root: {
     flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
     gap: 12,
+    zIndex: 10,
   },
   loadingText: {
     marginTop: 8,

@@ -26,8 +26,21 @@ export function AppScreen({
   const theme = useTheme();
   const headerForeground = isDark ? '#FFFFFF' : '#1C1B1F';
 
-  const body = (
-    <>
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      {!isDark ? (
+        <ImageBackground
+          source={backgroundImage}
+          style={styles.background}
+          resizeMode="cover"
+          pointerEvents="none"
+        />
+      ) : null}
       <Appbar.Header
         dark={isDark}
         style={[
@@ -59,34 +72,19 @@ export function AppScreen({
         />
         {actions}
       </Appbar.Header>
-      <View style={styles.content}>{children}</View>
-    </>
-  );
-
-  if (isDark) {
-    return (
-      <View
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
-      >
-        {body}
+      <View style={styles.content} pointerEvents="box-none">
+        {children}
       </View>
-    );
-  }
-
-  return (
-    <ImageBackground
-      source={backgroundImage}
-      style={styles.container}
-      resizeMode="cover"
-    >
-      {body}
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
   },
   header: {
     elevation: 0,

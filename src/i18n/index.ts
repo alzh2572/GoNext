@@ -11,31 +11,27 @@ export function isAppLanguage(value: string): value is AppLanguage {
   return value === 'ru' || value === 'en';
 }
 
-export async function initI18n(): Promise<typeof i18n> {
-  if (i18n.isInitialized) {
-    return i18n;
-  }
+i18n.use(initReactI18next).init({
+  resources: {
+    ru: { translation: ru },
+    en: { translation: en },
+  },
+  lng: 'ru',
+  fallbackLng: 'ru',
+  interpolation: { escapeValue: false },
+  react: { useSuspense: false },
+  initImmediate: false,
+});
 
-  let lng: AppLanguage = 'ru';
+export async function initI18n(): Promise<typeof i18n> {
   try {
     const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (stored && isAppLanguage(stored)) {
-      lng = stored;
+    if (stored && isAppLanguage(stored) && stored !== i18n.language) {
+      await i18n.changeLanguage(stored);
     }
   } catch {
-    // оставляем русский по умолчанию
+    // оставляем язык, с которым уже инициализированы
   }
-
-  await i18n.use(initReactI18next).init({
-    resources: {
-      ru: { translation: ru },
-      en: { translation: en },
-    },
-    lng,
-    fallbackLng: 'ru',
-    interpolation: { escapeValue: false },
-    react: { useSuspense: false },
-  });
 
   return i18n;
 }

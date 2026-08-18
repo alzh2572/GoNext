@@ -35,7 +35,6 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export function ThemePreferenceProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>('light');
   const [accentId, setAccentState] = useState<AccentId>(DEFAULT_ACCENT);
-  const [ready, setReady] = useState(false);
 
   const persist = useCallback((nextMode: ThemeMode, nextAccent: AccentId) => {
     const payload: StoredPrefs = { mode: nextMode, accentId: nextAccent };
@@ -63,10 +62,6 @@ export function ThemePreferenceProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         // оставляем значения по умолчанию
-      } finally {
-        if (!cancelled) {
-          setReady(true);
-        }
       }
     })();
 
@@ -101,10 +96,6 @@ export function ThemePreferenceProvider({ children }: { children: ReactNode }) {
     }),
     [mode, accentId, setMode, setAccentId],
   );
-
-  if (!ready) {
-    return null;
-  }
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
